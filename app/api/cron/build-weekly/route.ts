@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { acquireCronLock, releaseCronLock } from "@/lib/cron-lock";
+import { recordCronRun, type CronRunStatus } from "@/lib/cron-runs";
 import { buildWeeklyDraft } from "@/lib/editions";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +28,21 @@ function logBuildCron(level: "info" | "warn" | "error", message: string, metadat
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error || "Erro desconhecido");
+}
+
+async function safeRecordBuildRun(input: {
+  status: CronRunStatus;
+  requestId: string;
+  schedule: string | null;
+  startedAt: string;
+  durationMs: number;
+  summary: Record<string, unknown>;
+}) {
+  try {
+    await recordCronRun({ name: "build-weekly", ...input });
+  } catch (error) {
+    logBuildCron("error", "Build cron run history failed", { requestId: input.requestId, message: getErrorMessage(error) });
+  }
 }
 
 export async function GET(request: NextRequest) {
@@ -74,6 +90,14 @@ export async function GET(request: NextRequest) {
     };
 
     logBuildCron("warn", "Build cron skipped because lock is already held", response);
+    await safeRecordBuildRun({
+      status: "skipped",
+      requestId,
+      schedule,
+      startedAt: startedAt.toISOString(),
+      durationMs,
+      summary: response,
+    });
     return NextResponse.json(response);
   }
 
@@ -104,12 +128,28 @@ export async function GET(request: NextRequest) {
     };
 
     logBuildCron("info", "Build cron finished", response);
+    await safeRecordBuildRun({
+      status: result.collected > 0 ? "success" : "skipped",
+      requestId,
+      schedule,
+      startedAt: startedAt.toISOString(),
+      durationMs,
+      summary: response,
+    });
     return NextResponse.json(response);
   } catch (error) {
     const durationMs = Date.now() - startedAt.getTime();
     const message = getErrorMessage(error);
 
     logBuildCron("error", "Build cron failed", { requestId, durationMs, message });
+    await safeRecordBuildRun({
+      status: "error",
+      requestId,
+      schedule,
+      startedAt: startedAt.toISOString(),
+      durationMs,
+      summary: { success: false, error: message },
+    });
 
     return NextResponse.json(
       { success: false, error: message, requestId, schedule, startedAt: startedAt.toISOString(), durationMs },

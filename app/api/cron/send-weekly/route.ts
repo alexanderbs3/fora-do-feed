@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { acquireCronLock, releaseCronLock } from "@/lib/cron-lock";
+import { recordCronRun, type CronRunStatus } from "@/lib/cron-runs";
 import { getLatestApprovedEdition, markEditionSent, renderEditionHtml } from "@/lib/editions";
 import { getSubscribers, markWeeklyEmailFailed, markWeeklyEmailSent } from "@/lib/subscribers";
 import { getUnsubscribeUrl } from "@/lib/urls";
@@ -59,6 +60,21 @@ function logCron(level: "info" | "warn" | "error", message: string, metadata: Re
   };
 
   console[level](JSON.stringify(payload));
+}
+
+async function safeRecordSendRun(input: {
+  status: CronRunStatus;
+  requestId: string;
+  schedule: string | null;
+  startedAt: string;
+  durationMs: number;
+  summary: Record<string, unknown>;
+}) {
+  try {
+    await recordCronRun({ name: "send-weekly", ...input });
+  } catch (error) {
+    logCron("error", "Send cron run history failed", { requestId: input.requestId, message: getErrorMessage(error) });
+  }
 }
 
 export async function GET(request: NextRequest) {
@@ -149,6 +165,14 @@ export async function GET(request: NextRequest) {
     };
 
     logCron("warn", "Send cron skipped because lock is already held", response);
+    await safeRecordSendRun({
+      status: "skipped",
+      requestId,
+      schedule: auth.schedule,
+      startedAt: startedAt.toISOString(),
+      durationMs,
+      summary: response,
+    });
     return NextResponse.json(response);
   }
 
@@ -177,6 +201,14 @@ export async function GET(request: NextRequest) {
       };
 
       logCron("info", "Cron finished without sending because there is no approved edition", response);
+      await safeRecordSendRun({
+        status: "skipped",
+        requestId,
+        schedule: auth.schedule,
+        startedAt: startedAt.toISOString(),
+        durationMs,
+        summary: response,
+      });
       return NextResponse.json(response);
     }
 
@@ -287,6 +319,14 @@ export async function GET(request: NextRequest) {
     };
 
     logCron(errors.length === 0 ? "info" : "warn", "Cron invocation finished", response);
+    await safeRecordSendRun({
+      status: errors.length === 0 ? "success" : "error",
+      requestId,
+      schedule: auth.schedule,
+      startedAt: startedAt.toISOString(),
+      durationMs,
+      summary: response,
+    });
 
     return NextResponse.json(response, { status: errors.length === 0 ? 200 : 207 });
   } catch (error) {
@@ -297,6 +337,14 @@ export async function GET(request: NextRequest) {
       requestId,
       durationMs,
       message,
+    });
+    await safeRecordSendRun({
+      status: "error",
+      requestId,
+      schedule: auth.schedule,
+      startedAt: startedAt.toISOString(),
+      durationMs,
+      summary: { success: false, error: message },
     });
 
     return NextResponse.json(

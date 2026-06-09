@@ -85,6 +85,7 @@ async function main() {
   results.push(await checkTable(env, "newsletter_editions"));
   results.push(await checkTable(env, "news_items"));
   results.push(await checkTable(env, "cron_locks"));
+  results.push(await checkTable(env, "cron_runs"));
 
   if (results.every(Boolean)) {
     console.log("Supabase configurado corretamente para as tabelas da newsletter.");

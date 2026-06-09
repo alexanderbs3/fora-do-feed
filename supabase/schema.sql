@@ -80,3 +80,22 @@ create index if not exists cron_locks_locked_until_idx on public.cron_locks (loc
 alter table public.cron_locks enable row level security;
 
 grant select, insert, update, delete on public.cron_locks to service_role;
+
+create table if not exists public.cron_runs (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  status text not null check (status in ('success', 'skipped', 'error')),
+  request_id text,
+  schedule text,
+  started_at timestamptz not null,
+  duration_ms integer not null default 0,
+  summary jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists cron_runs_name_started_at_idx on public.cron_runs (name, started_at desc);
+create index if not exists cron_runs_status_started_at_idx on public.cron_runs (status, started_at desc);
+
+alter table public.cron_runs enable row level security;
+
+grant select, insert, update, delete on public.cron_runs to service_role;

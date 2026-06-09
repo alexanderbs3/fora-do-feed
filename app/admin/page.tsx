@@ -66,6 +66,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </div>
           <div className="flex flex-wrap gap-4 text-sm text-[#d8ff3e]">
             <a className="underline" href="/admin/editions">Edições</a>
+            <a className="underline" href="/admin/cron-runs">Crons</a>
             <a className="underline" href="/admin/export/subscribers">Exportar CSV</a>
             <a className="underline" href="/email-preview/weekly/1" target="_blank">Preview Semana 1</a>
             <form action={logoutAdmin}>
