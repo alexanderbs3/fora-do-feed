@@ -29,7 +29,7 @@ function loadEnv() {
 
 async function checkTable(env, table) {
   const url = new URL(`/rest/v1/${table}`, env.NEXT_PUBLIC_SUPABASE_URL);
-  url.searchParams.set("select", "id");
+  url.searchParams.set("select", table === "cron_locks" ? "name" : "id");
   url.searchParams.set("limit", "1");
 
   const response = await fetch(url, {
@@ -84,6 +84,7 @@ async function main() {
   results.push(await checkTable(env, "subscriber_events"));
   results.push(await checkTable(env, "newsletter_editions"));
   results.push(await checkTable(env, "news_items"));
+  results.push(await checkTable(env, "cron_locks"));
 
   if (results.every(Boolean)) {
     console.log("Supabase configurado corretamente para as tabelas da newsletter.");

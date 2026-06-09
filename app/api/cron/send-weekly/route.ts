@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { acquireCronLock, releaseCronLock } from "@/lib/cron-lock";
 import { getLatestApprovedEdition, markEditionSent, renderEditionHtml } from "@/lib/editions";
 import { getSubscribers, markWeeklyEmailFailed, markWeeklyEmailSent } from "@/lib/subscribers";
 import { getUnsubscribeUrl } from "@/lib/urls";
@@ -127,6 +128,32 @@ export async function GET(request: NextRequest) {
       },
       { status: 500 }
     );
+  }
+
+  const lock = await acquireCronLock("send-weekly", 10 * 60 * 1000);
+  if (!lock.acquired) {
+    const durationMs = Date.now() - startedAt.getTime();
+    const response = {
+      success: true,
+      requestId,
+      isVercelCron: auth.isVercelCron,
+      schedule: auth.schedule,
+      startedAt: startedAt.toISOString(),
+      durationMs,
+      reason: "Cron already running",
+      checked: 0,
+      sent: 0,
+      skipped: 0,
+      failed: 0,
+      errors: [] as CronError[],
+    };
+
+    logCron("warn", "Send cron skipped because lock is already held", response);
+    return NextResponse.json(response);
+  }
+
+  if (lock.disabled) {
+    logCron("warn", "Send cron lock table is missing; running without lock", { requestId });
   }
 
   try {
@@ -284,5 +311,11 @@ export async function GET(request: NextRequest) {
       },
       { status: 500 }
     );
+  } finally {
+    try {
+      await releaseCronLock(lock);
+    } catch (releaseError) {
+      logCron("error", "Send cron lock release failed", { requestId, message: getErrorMessage(releaseError) });
+    }
   }
 }

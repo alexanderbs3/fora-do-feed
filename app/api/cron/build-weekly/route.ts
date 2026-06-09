@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { acquireCronLock, releaseCronLock } from "@/lib/cron-lock";
 import { buildWeeklyDraft } from "@/lib/editions";
 
 export const dynamic = "force-dynamic";
@@ -58,6 +59,28 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const lock = await acquireCronLock("build-weekly", 10 * 60 * 1000);
+  if (!lock.acquired) {
+    const durationMs = Date.now() - startedAt.getTime();
+    const response = {
+      success: true,
+      requestId,
+      schedule,
+      startedAt: startedAt.toISOString(),
+      durationMs,
+      reason: "Cron already running",
+      collected: 0,
+      edition: null,
+    };
+
+    logBuildCron("warn", "Build cron skipped because lock is already held", response);
+    return NextResponse.json(response);
+  }
+
+  if (lock.disabled) {
+    logBuildCron("warn", "Build cron lock table is missing; running without lock", { requestId });
+  }
+
   try {
     const result = await buildWeeklyDraft();
     const durationMs = Date.now() - startedAt.getTime();
@@ -92,5 +115,11 @@ export async function GET(request: NextRequest) {
       { success: false, error: message, requestId, schedule, startedAt: startedAt.toISOString(), durationMs },
       { status: 500 }
     );
+  } finally {
+    try {
+      await releaseCronLock(lock);
+    } catch (releaseError) {
+      logBuildCron("error", "Build cron lock release failed", { requestId, message: getErrorMessage(releaseError) });
+    }
   }
 }

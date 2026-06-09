@@ -67,3 +67,16 @@ alter table public.news_items enable row level security;
 
 grant select, insert, update, delete on public.newsletter_editions to service_role;
 grant select, insert, update, delete on public.news_items to service_role;
+
+create table if not exists public.cron_locks (
+  name text primary key,
+  owner text not null,
+  locked_until timestamptz not null,
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists cron_locks_locked_until_idx on public.cron_locks (locked_until);
+
+alter table public.cron_locks enable row level security;
+
+grant select, insert, update, delete on public.cron_locks to service_role;
