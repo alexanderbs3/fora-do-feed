@@ -144,10 +144,29 @@ export async function buildWeeklyDraft() {
   const supabase = createSupabaseAdmin();
   const now = new Date();
   const slug = createSlug(now);
+
+  const { data: existingEdition, error: existingError } = await supabase
+    .from("newsletter_editions")
+    .select("id,title,slug,status,intro,items,created_at,approved_at,sent_at")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (existingError) {
+    throw new Error(`Erro ao verificar edição existente: ${existingError.message}`);
+  }
+
+  if (existingEdition && (existingEdition as NewsletterEditionRow).status !== "draft") {
+    return {
+      edition: mapEdition(existingEdition as NewsletterEditionRow),
+      collected: 0,
+      reason: "Edition already approved or sent",
+    };
+  }
+
   const news = await fetchRecentNews(7);
 
   if (news.length === 0) {
-    return { edition: null, collected: 0 };
+    return { edition: existingEdition ? mapEdition(existingEdition as NewsletterEditionRow) : null, collected: 0, reason: "No recent news found" };
   }
 
   const newsRows = news.map((item: ScoredNewsItem) => ({
@@ -174,11 +193,15 @@ export async function buildWeeklyDraft() {
     score: item.score,
   }));
 
-  const { data, error } = await supabase
-    .from("newsletter_editions")
-    .upsert({ title, slug, status: "draft", intro, items }, { onConflict: "slug" })
-    .select("id,title,slug,status,intro,items,created_at,approved_at,sent_at")
-    .single();
+  const query = existingEdition
+    ? supabase
+        .from("newsletter_editions")
+        .update({ title, intro, items })
+        .eq("id", (existingEdition as NewsletterEditionRow).id)
+        .eq("status", "draft")
+    : supabase.from("newsletter_editions").insert({ title, slug, status: "draft", intro, items });
+
+  const { data, error } = await query.select("id,title,slug,status,intro,items,created_at,approved_at,sent_at").single();
 
   if (error) {
     throw new Error(`Erro ao criar rascunho: ${error.message}`);

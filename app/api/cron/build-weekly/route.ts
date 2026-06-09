@@ -68,6 +68,7 @@ export async function GET(request: NextRequest) {
       startedAt: startedAt.toISOString(),
       durationMs,
       collected: result.collected,
+      reason: result.reason,
       edition: result.edition
         ? {
             id: result.edition.id,

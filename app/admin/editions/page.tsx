@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { EditionStatus, listEditions } from "@/lib/editions";
-import { approveEditionAction } from "./actions";
+import { approveEditionAction, buildDraftAction } from "./actions";
 
 type EditionsPageProps = {
   searchParams: Promise<{ status?: EditionStatus }>;
@@ -37,6 +37,9 @@ export default async function EditionsPage({ searchParams }: EditionsPageProps) 
             <a className="underline" href="/admin/editions?status=draft">Drafts</a>
             <a className="underline" href="/admin/editions?status=approved">Aprovadas</a>
             <a className="underline" href="/admin/editions?status=sent">Enviadas</a>
+            <form action={buildDraftAction}>
+              <button className="underline" type="submit">Gerar rascunho</button>
+            </form>
           </div>
         </div>
 
