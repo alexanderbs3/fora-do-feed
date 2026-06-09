@@ -1,8 +1,6 @@
-export type RssSource = {
-  name: string;
-  url: string;
-  trust: number;
-};
+import { getActiveRssSources, type RssSource } from "@/lib/rss-sources";
+
+export type { RssSource };
 
 export type ScoredNewsItem = {
   title: string;
@@ -12,24 +10,6 @@ export type ScoredNewsItem = {
   summary: string;
   score: number;
 };
-
-export const rssSources: RssSource[] = [
-  { name: "Tecnoblog", url: "https://tecnoblog.net/feed/", trust: 8 },
-  { name: "Canaltech", url: "https://canaltech.com.br/rss/", trust: 7 },
-  { name: "Olhar Digital", url: "https://olhardigital.com.br/feed/", trust: 7 },
-  { name: "Manual do Usuario", url: "https://manualdousuario.net/feed/", trust: 8 },
-  { name: "Nucleo", url: "https://nucleo.jor.br/rss/", trust: 8 },
-  { name: "Brazil Journal", url: "https://braziljournal.com/feed/", trust: 7 },
-  { name: "TechCrunch", url: "https://techcrunch.com/feed/", trust: 8 },
-  { name: "The Verge", url: "https://www.theverge.com/rss/index.xml", trust: 8 },
-  { name: "Wired", url: "https://www.wired.com/feed/rss", trust: 8 },
-  { name: "MIT Technology Review", url: "https://www.technologyreview.com/feed/", trust: 9 },
-  { name: "Ars Technica", url: "https://feeds.arstechnica.com/arstechnica/index", trust: 8 },
-  { name: "GitHub Blog", url: "https://github.blog/feed/", trust: 8 },
-  { name: "Cloudflare Blog", url: "https://blog.cloudflare.com/rss/", trust: 8 },
-  { name: "Google Security Blog", url: "https://security.googleblog.com/feeds/posts/default", trust: 8 },
-  { name: "Hacker News", url: "https://hnrss.org/frontpage", trust: 7 },
-];
 
 const aiBusinessTerms = [
   "ai",
@@ -187,6 +167,7 @@ function parseItems(xml: string, source: RssSource) {
 
 export async function fetchRecentNews(days = 7) {
   const since = Date.now() - days * 24 * 60 * 60 * 1000;
+  const rssSources = await getActiveRssSources();
   const results = await Promise.allSettled(
     rssSources.map(async (source) => {
       const response = await fetch(source.url, { next: { revalidate: 60 * 30 } });

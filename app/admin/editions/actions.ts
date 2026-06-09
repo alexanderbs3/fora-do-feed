@@ -55,6 +55,7 @@ export async function saveDraftEditionAction(formData: FormData) {
   const sources = getStringList(formData, "itemSource");
   const summaries = getStringList(formData, "itemSummary");
   const scores = getStringList(formData, "itemScore");
+  const orders = getStringList(formData, "itemOrder");
   const removeIndexes = new Set(getStringList(formData, "removeItem"));
 
   if (!id || !title || !intro) {
@@ -68,11 +69,13 @@ export async function saveDraftEditionAction(formData: FormData) {
       source: (sources[index] || "").trim(),
       summary: (summaries[index] || "").trim(),
       score: Number(scores[index] || 0),
+      order: Number(orders[index] || index + 1),
       index,
     }))
     .filter((item) => !removeIndexes.has(String(item.index)))
     .filter((item) => item.title && item.url && item.source && item.summary)
-    .map(({ index: _index, ...item }) => item);
+    .sort((a, b) => a.order - b.order)
+    .map(({ index: _index, order: _order, ...item }) => item);
 
   if (items.length === 0) {
     throw new Error("A edição precisa ter pelo menos um item.");

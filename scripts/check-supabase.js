@@ -27,7 +27,7 @@ function loadEnv() {
   return env;
 }
 
-async function checkTable(env, table) {
+async function checkTable(env, table, options = {}) {
   const url = new URL(`/rest/v1/${table}`, env.NEXT_PUBLIC_SUPABASE_URL);
   url.searchParams.set("select", table === "cron_locks" ? "name" : "id");
   url.searchParams.set("limit", "1");
@@ -54,7 +54,7 @@ async function checkTable(env, table) {
   const code = parsed?.code || response.status;
   const message = parsed?.message || body || response.statusText;
   const hint = parsed?.hint || "";
-  console.log(`${table}: ERRO ${code} - ${message}`);
+  console.log(`${table}: ${options.optional ? "AVISO" : "ERRO"} ${code} - ${message}`);
 
   if (code === "42P01") {
     console.log(`Tabela ausente. Execute supabase/schema.sql no SQL Editor do Supabase.`);
@@ -68,7 +68,7 @@ async function checkTable(env, table) {
     }
   }
 
-  return false;
+  return Boolean(options.optional);
 }
 
 async function main() {
@@ -86,6 +86,8 @@ async function main() {
   results.push(await checkTable(env, "news_items"));
   results.push(await checkTable(env, "cron_locks"));
   results.push(await checkTable(env, "cron_runs"));
+  results.push(await checkTable(env, "rss_sources", { optional: true }));
+  results.push(await checkTable(env, "newsletter_clicks", { optional: true }));
 
   if (results.every(Boolean)) {
     console.log("Supabase configurado corretamente para as tabelas da newsletter.");

@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { listPublishedEditions } from "@/lib/editions";
 
 export const metadata: Metadata = {
-  title: "Arquivo | Fora do Feed",
+  title: "Arquivo",
   description: "Leia as edições já enviadas da newsletter Fora do Feed.",
+  alternates: { canonical: "/arquivo" },
 };
 
 export const dynamic = "force-dynamic";

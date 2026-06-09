@@ -248,7 +248,7 @@ export async function GET(request: NextRequest) {
         from,
         to: [subscriber.email],
         subject: edition.title,
-        html: renderEditionHtml(edition, getUnsubscribeUrl(subscriber.unsubscribeToken)),
+        html: renderEditionHtml(edition, getUnsubscribeUrl(subscriber.unsubscribeToken), subscriber.unsubscribeToken),
       });
 
       if (error) {

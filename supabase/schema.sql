@@ -99,3 +99,36 @@ create index if not exists cron_runs_status_started_at_idx on public.cron_runs (
 alter table public.cron_runs enable row level security;
 
 grant select, insert, update, delete on public.cron_runs to service_role;
+
+create table if not exists public.rss_sources (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  url text not null unique,
+  trust integer not null default 7 check (trust between 1 and 10),
+  enabled boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists rss_sources_enabled_name_idx on public.rss_sources (enabled, name);
+
+alter table public.rss_sources enable row level security;
+
+grant select, insert, update, delete on public.rss_sources to service_role;
+
+create table if not exists public.newsletter_clicks (
+  id uuid primary key default gen_random_uuid(),
+  edition_id uuid not null references public.newsletter_editions(id) on delete cascade,
+  subscriber_id uuid references public.subscribers(id) on delete set null,
+  item_index integer not null default 0,
+  url text not null,
+  user_agent text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists newsletter_clicks_edition_created_at_idx on public.newsletter_clicks (edition_id, created_at desc);
+create index if not exists newsletter_clicks_subscriber_created_at_idx on public.newsletter_clicks (subscriber_id, created_at desc);
+
+alter table public.newsletter_clicks enable row level security;
+
+grant select, insert, update, delete on public.newsletter_clicks to service_role;

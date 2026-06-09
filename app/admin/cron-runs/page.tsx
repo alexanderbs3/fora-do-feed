@@ -108,7 +108,7 @@ export default async function CronRunsPage({ searchParams }: CronRunsPageProps) 
           <form action={triggerBuildWeeklyAction} className="border border-[#f1e7d0]/15 bg-[#f1e7d0]/5 p-5">
             <h2 className="font-[var(--font-display)] text-2xl tracking-[-0.04em] text-[#f8f0dc]">Gerar rascunho</h2>
             <p className="mt-2 text-sm text-[#f1e7d0]/65">
-              Executa o mesmo cron de segunda-feira e cria ou atualiza o draft se não houver edição aprovada ou enviada.
+              Executa o mesmo cron de segunda-feira. Atualiza draft existente, bloqueia edição aprovada e cria novo draft se a anterior já foi enviada.
             </p>
             <button className="mt-5 bg-[#d8ff3e] px-4 py-3 font-[var(--font-display)] text-xs uppercase tracking-[0.2em] text-[#14110f]" type="submit">
               Rodar build-weekly

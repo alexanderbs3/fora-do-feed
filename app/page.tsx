@@ -1,4 +1,11 @@
 import { SubscribeForm } from "./components/SubscribeForm";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Fora do Feed",
+  description: "Receba curadoria de tecnologia, software, IA e negócios tech com contexto prático para devs.",
+  alternates: { canonical: "/" },
+};
 
 const topics = ["código limpo", "produção real", "IA aplicada", "carreira dev"];
 

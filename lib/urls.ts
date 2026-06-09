@@ -8,3 +8,8 @@ export function getAppUrl() {
 export function getUnsubscribeUrl(token: string) {
   return `${getAppUrl()}/unsubscribe?token=${encodeURIComponent(token)}`;
 }
+
+export function getTrackedClickUrl(input: { editionId: string; itemIndex: number; token: string; url: string }) {
+  const params = new URLSearchParams({ e: input.editionId, i: String(input.itemIndex), t: input.token, u: input.url });
+  return `${getAppUrl()}/api/click?${params.toString()}`;
+}

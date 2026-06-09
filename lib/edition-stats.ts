@@ -1,5 +1,6 @@
 import { createSupabaseAdmin } from "@/lib/supabase";
 import type { NewsletterEdition } from "@/lib/editions";
+import { getClickStatsByEdition } from "@/lib/click-tracking";
 
 export type EditionStats = {
   checked: number;
@@ -10,6 +11,9 @@ export type EditionStats = {
   durationMs?: number;
   requestId?: string;
   startedAt?: string;
+  totalClicks: number;
+  uniqueClickers: number;
+  topItems: Array<{ itemIndex: number; clicks: number }>;
 };
 
 type CronRunRow = {
@@ -78,7 +82,7 @@ export async function getEditionStats(edition: NewsletterEdition): Promise<Editi
   }
 
   const supabase = createSupabaseAdmin();
-  const [{ data, error }, unsubscribedAfterSend] = await Promise.all([
+  const [{ data, error }, unsubscribedAfterSend, clickStats] = await Promise.all([
     supabase
       .from("cron_runs")
       .select("request_id,started_at,duration_ms,summary")
@@ -86,6 +90,7 @@ export async function getEditionStats(edition: NewsletterEdition): Promise<Editi
       .order("started_at", { ascending: false })
       .limit(100),
     countUnsubscribesInWindow(edition),
+    getClickStatsByEdition(edition.id),
   ]);
 
   if (error) {
@@ -100,6 +105,9 @@ export async function getEditionStats(edition: NewsletterEdition): Promise<Editi
       failed: 0,
       skipped: 0,
       unsubscribedAfterSend,
+      totalClicks: clickStats.totalClicks,
+      uniqueClickers: clickStats.uniqueClickers,
+      topItems: clickStats.topItems,
     };
   }
 
@@ -109,6 +117,9 @@ export async function getEditionStats(edition: NewsletterEdition): Promise<Editi
     failed: numberFromSummary(matchingRun.summary, "failed"),
     skipped: numberFromSummary(matchingRun.summary, "skipped"),
     unsubscribedAfterSend,
+    totalClicks: clickStats.totalClicks,
+    uniqueClickers: clickStats.uniqueClickers,
+    topItems: clickStats.topItems,
     durationMs: matchingRun.duration_ms || undefined,
     requestId: matchingRun.request_id || undefined,
     startedAt: matchingRun.started_at,

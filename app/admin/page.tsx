@@ -1,5 +1,6 @@
 import { getSubscriberStats, getSubscribers } from "@/lib/subscribers";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { getGrowthAnalytics } from "@/lib/admin-analytics";
 import { getEditorialNextAction, getLatestEdition } from "@/lib/editions";
 import { loginAdmin, logoutAdmin } from "./actions";
 
@@ -48,6 +49,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   const subscribers = await getSubscribers();
   const stats = getSubscriberStats(subscribers);
+  const growth = getGrowthAnalytics(subscribers);
   const latestEdition = await getLatestEdition();
   const nextAction = getEditorialNextAction(latestEdition);
   const recentEvents = subscribers
@@ -70,6 +72,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <div className="flex flex-wrap gap-4 text-sm text-[#d8ff3e]">
             <a className="underline" href="/admin/editions">Edições</a>
             <a className="underline" href="/admin/cron-runs">Crons</a>
+            <a className="underline" href="/admin/rss-sources">Fontes RSS</a>
             <a className="underline" href="/admin/export/subscribers">Exportar CSV</a>
             <a className="underline" href="/email-preview/weekly/1" target="_blank">Preview Semana 1</a>
             <form action={logoutAdmin}>
@@ -96,6 +99,21 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <div key={label} className="border border-[#f1e7d0]/15 bg-[#f1e7d0]/5 p-4">
               <p className="text-xs uppercase tracking-[0.2em] text-[#f1e7d0]/50">{label}</p>
               <p className="mt-3 font-[var(--font-display)] text-3xl text-[#d8ff3e]">{value}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8 grid gap-3 sm:grid-cols-5">
+          {[
+            ["Novos 7d", growth.subscribedLast7],
+            ["Novos 30d", growth.subscribedLast30],
+            ["Saídas 30d", growth.unsubscribedLast30],
+            ["Saldo 30d", growth.netLast30],
+            ["Retenção", `${growth.retentionRate}%`],
+          ].map(([label, value]) => (
+            <div key={label} className="border border-[#d8ff3e]/20 bg-[#d8ff3e]/8 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-[#f1e7d0]/50">{label}</p>
+              <p className="mt-3 font-[var(--font-display)] text-3xl text-[#f8f0dc]">{value}</p>
             </div>
           ))}
         </div>

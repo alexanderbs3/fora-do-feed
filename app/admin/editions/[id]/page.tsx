@@ -47,6 +47,15 @@ export default async function EditionPage({ params, searchParams }: EditionPageP
             >
               Preview HTML
             </a>
+            {edition.status === "sent" && (
+              <a
+                className="border border-[#f1e7d0]/25 px-4 py-3 font-[var(--font-display)] text-xs uppercase tracking-[0.2em] text-[#f1e7d0]/70"
+                href={`/arquivo/${edition.slug}`}
+                target="_blank"
+              >
+                Ver no arquivo
+              </a>
+            )}
           </div>
 
           {saved && <p className="mt-5 border border-[#d8ff3e]/40 bg-[#d8ff3e]/10 p-3 text-sm text-[#d8ff3e]">Alterações salvas.</p>}
@@ -75,6 +84,8 @@ export default async function EditionPage({ params, searchParams }: EditionPageP
                   ["Falhas", stats.failed],
                   ["Pulados", stats.skipped],
                   ["Descadastros", stats.unsubscribedAfterSend],
+                  ["Cliques", stats.totalClicks],
+                  ["Leitores que clicaram", stats.uniqueClickers],
                 ].map(([label, value]) => (
                   <div key={label} className="border border-[#f1e7d0]/12 bg-[#080b12]/35 p-4">
                     <p className="text-xs uppercase tracking-[0.18em] text-[#f1e7d0]/45">{label}</p>
@@ -86,6 +97,16 @@ export default async function EditionPage({ params, searchParams }: EditionPageP
                 <p>Execução: {formatDate(stats.startedAt)}</p>
                 <p>Duração: {typeof stats.durationMs === "number" ? `${stats.durationMs}ms` : "-"}</p>
               </div>
+              {stats.topItems.length > 0 && (
+                <div className="mt-4 border-t border-[#f1e7d0]/12 pt-4 text-sm text-[#f1e7d0]/65">
+                  <p className="font-[var(--font-display)] text-xs uppercase tracking-[0.18em] text-[#d8ff3e]">Mais clicadas</p>
+                  <div className="mt-3 space-y-2">
+                    {stats.topItems.slice(0, 5).map((item) => (
+                      <p key={item.itemIndex}>Item {item.itemIndex + 1}: {item.clicks} clique(s)</p>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -151,8 +172,14 @@ export default async function EditionPage({ params, searchParams }: EditionPageP
               <div className="space-y-5">
                 {edition.items.map((item, index) => (
                   <article key={item.url} className="border border-[#f1e7d0]/12 bg-[#080b12]/40 p-5">
-                    <div className="mb-4 flex items-center justify-between gap-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-[#d8ff3e]">Item {index + 1}</p>
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <p className="text-xs uppercase tracking-[0.2em] text-[#d8ff3e]">Item {index + 1}</p>
+                        <label className="flex items-center gap-2 text-xs text-[#f1e7d0]/55">
+                          Ordem
+                          <input name="itemOrder" type="number" defaultValue={index + 1} className="w-16 border border-[#f1e7d0]/18 bg-[#f1e7d0]/8 px-2 py-1 text-[#fff7e8] outline-none" />
+                        </label>
+                      </div>
                       <label className="flex items-center gap-2 text-xs text-[#ffb29d]">
                         <input type="checkbox" name="removeItem" value={String(index)} />
                         Remover

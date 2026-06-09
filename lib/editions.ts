@@ -1,5 +1,6 @@
 import { createSupabaseAdmin } from "@/lib/supabase";
 import { fetchRecentNews, ScoredNewsItem } from "@/lib/rss";
+import { getTrackedClickUrl } from "@/lib/urls";
 
 export type EditionStatus = "draft" | "approved" | "sent";
 
@@ -66,6 +67,21 @@ function isMissingTableError(error: { code?: string; message?: string }) {
 
 function createSlug(date = new Date()) {
   return `edicao-${date.toISOString().slice(0, 10)}`;
+}
+
+function getNextSlug(baseSlug: string, existingSlugs: Set<string>) {
+  if (!existingSlugs.has(baseSlug)) {
+    return baseSlug;
+  }
+
+  for (let index = 2; index < 100; index += 1) {
+    const slug = `${baseSlug}-${index}`;
+    if (!existingSlugs.has(slug)) {
+      return slug;
+    }
+  }
+
+  return `${baseSlug}-${Date.now()}`;
 }
 
 export async function listEditions(status?: EditionStatus) {
@@ -272,30 +288,35 @@ export async function markEditionSent(id: string) {
 export async function buildWeeklyDraft() {
   const supabase = createSupabaseAdmin();
   const now = new Date();
-  const slug = createSlug(now);
+  const baseSlug = createSlug(now);
 
-  const { data: existingEdition, error: existingError } = await supabase
+  const { data: existingEditions, error: existingError } = await supabase
     .from("newsletter_editions")
     .select("id,title,slug,status,intro,items,created_at,approved_at,sent_at")
-    .eq("slug", slug)
-    .maybeSingle();
+    .like("slug", `${baseSlug}%`)
+    .order("created_at", { ascending: false });
 
   if (existingError) {
     throw new Error(`Erro ao verificar edição existente: ${existingError.message}`);
   }
 
-  if (existingEdition && (existingEdition as NewsletterEditionRow).status !== "draft") {
+  const editionsForSlug = ((existingEditions || []) as NewsletterEditionRow[]);
+  const existingDraft = editionsForSlug.find((edition) => edition.status === "draft");
+  const existingApproved = editionsForSlug.find((edition) => edition.status === "approved");
+  const slug = existingDraft?.slug || getNextSlug(baseSlug, new Set(editionsForSlug.map((edition) => edition.slug)));
+
+  if (existingApproved) {
     return {
-      edition: mapEdition(existingEdition as NewsletterEditionRow),
+      edition: mapEdition(existingApproved),
       collected: 0,
-      reason: "Edition already approved or sent",
+      reason: "Edition already approved",
     };
   }
 
   const news = await fetchRecentNews(7);
 
   if (news.length === 0) {
-    return { edition: existingEdition ? mapEdition(existingEdition as NewsletterEditionRow) : null, collected: 0, reason: "No recent news found" };
+    return { edition: existingDraft ? mapEdition(existingDraft) : null, collected: 0, reason: "No recent news found" };
   }
 
   const newsRows = news.map((item: ScoredNewsItem) => ({
@@ -322,11 +343,11 @@ export async function buildWeeklyDraft() {
     score: item.score,
   }));
 
-  const query = existingEdition
+  const query = existingDraft
     ? supabase
         .from("newsletter_editions")
         .update({ title, intro, items })
-        .eq("id", (existingEdition as NewsletterEditionRow).id)
+        .eq("id", existingDraft.id)
         .eq("status", "draft")
     : supabase.from("newsletter_editions").insert({ title, slug, status: "draft", intro, items });
 
@@ -348,17 +369,21 @@ function escapeHtml(value: string) {
     .replaceAll("'", "&#39;");
 }
 
-export function renderEditionHtml(edition: NewsletterEdition, unsubscribeUrl: string) {
+export function renderEditionHtml(edition: NewsletterEdition, unsubscribeUrl: string, trackingToken?: string) {
   const items = edition.items
-    .map(
-      (item) => `
+    .map((item, index) => {
+      const itemUrl = trackingToken
+        ? getTrackedClickUrl({ editionId: edition.id, itemIndex: index, token: trackingToken, url: item.url })
+        : item.url;
+
+      return `
         <li style="margin:0 0 24px;padding:0 0 20px;border-bottom:1px solid #e7dcc4;">
           <p style="margin:0 0 6px;color:#6b6256;font-size:12px;text-transform:uppercase;letter-spacing:1px;">${escapeHtml(item.source)}</p>
           <h2 style="margin:0 0 8px;font-size:20px;line-height:1.3;color:#161616;">${escapeHtml(item.title)}</h2>
           <p style="margin:0 0 10px;color:#333;line-height:1.6;">${escapeHtml(item.summary)}</p>
-          <a href="${escapeHtml(item.url)}" style="color:#0b5fff;">Ler notícia original</a>
-        </li>`
-    )
+          <a href="${escapeHtml(itemUrl)}" style="color:#0b5fff;">Ler notícia original</a>
+        </li>`;
+    })
     .join("");
 
   return `
