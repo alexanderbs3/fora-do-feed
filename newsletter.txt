@@ -1,0 +1,266 @@
+===============================================================================
+SISTEMA DE NEWSLETTER END-TO-END COM NEXT.JS (APP ROUTER)
+===============================================================================
+
+Este arquivo contém a especificação completa de pastas, dependências e todos os
+arquivos de código fonte necessários para rodar uma solução de Newsletter de alta 
+performance utilizando Next.js, React Email, Resend e Zod.
+
+-------------------------------------------------------------------------------
+1. ESTRUTURA DE PASTAS E ARQUIVOS DO PROJETO
+-------------------------------------------------------------------------------
+
+meu-projeto-newsletter/
+├── app/
+│   ├── actions/
+│   │   └── subscribe.ts          # Server Action (Validação e envio de e-mail)
+│   ├── components/
+│   │   └── SubscribeForm.tsx     # Client Component (Formulário UI)
+│   ├── layout.tsx                # Layout global da aplicação
+│   └── page.tsx                  # Server Component (Landing Page de captura)
+├── emails/
+│   └── WelcomeEmail.tsx          # Template do e-mail (React Email)
+└── .env.local                    # Variáveis de ambiente (Chave de API)
+
+-------------------------------------------------------------------------------
+2. DEPENDÊNCIAS DO PROJETO (package.json)
+-------------------------------------------------------------------------------
+
+Execute o comando abaixo no terminal do seu projeto Next.js 15+ para instalar 
+as ferramentas necessárias:
+
+cmd> npm install resend zod @react-email/components
+
+-------------------------------------------------------------------------------
+3. CÓDIGO FONTE DOS COMPONENTES E ARQUIVOS
+-------------------------------------------------------------------------------
+
+--- ARQUIVO: emails/WelcomeEmail.tsx ---
+import {
+  Body,
+  Container,
+  Head,
+  Heading,
+  Html,
+  Preview,
+  Text,
+  Link,
+  Tailwind,
+} from "@react-email/components";
+import * as React from "react";
+
+interface WelcomeEmailProps {
+  name?: string;
+}
+
+export const WelcomeEmail = ({ name = "Dev" }: WelcomeEmailProps) => {
+  return (
+    <Html>
+      <Head />
+      <Preview>Bem-vindo à nossa Newsletter técnica! 🚀</Preview>
+      <Tailwind>
+        <Body className="bg-gray-50 font-sans m-0 p-0">
+          <Container className="bg-white my-10 mx-auto p-8 rounded-xl shadow-sm max-w-xl border border-gray-100">
+            <Heading className="text-2xl font-bold text-gray-900 mb-4 tracking-tight">
+              Olá, {name}! 👋
+            </Heading>
+            <Text className="text-gray-600 text-base leading-relaxed mb-4">
+              Obrigado por se inscrever na nossa newsletter. A partir de agora, você receberá 
+              análises aprofundadas sobre engenharia de software, arquitetura de sistemas e 
+              boas práticas de desenvolvimento diretamente na sua caixa de entrada.
+            </Text>
+            <Text className="text-gray-600 text-base leading-relaxed mb-6">
+              Preparamos conteúdos práticos, focados em cenários reais de produção, sem enrolação.
+            </Text>
+            <div className="border-t border-gray-100 my-6 pt-6">
+              <Text className="text-xs text-gray-400 leading-normal">
+                Você recebeu este e-mail porque se cadastrou em nossa landing page. Se deseja parar de receber 
+                estas atualizações, basta <Link href="#" className="text-indigo-600 underline font-medium">cancelar a inscrição aqui</Link>.
+              </Text>
+            </div>
+          </Container>
+        </Body>
+      </Tailwind>
+    </Html>
+  );
+};
+
+export default WelcomeEmail;
+
+
+--- ARQUIVO: app/actions/subscribe.ts ---
+"use server";
+
+import { z } from "zod";
+import { Resend } from "resend";
+import WelcomeEmail from "@/emails/WelcomeEmail";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+const subscribeSchema = z.object({
+  email: z.string()
+    .min(1, "O e-mail é obrigatório.")
+    .email("Por favor, insira um endereço de e-mail válido."),
+  name: z.string()
+    .min(2, "O nome deve conter pelo menos 2 caracteres.")
+    .max(50, "O nome excedeu o limite de caracteres.")
+    .optional()
+    .or(z.literal("")),
+});
+
+export type FormState = {
+  success: boolean;
+  message: string;
+};
+
+export async function subscribeUser(prevState: FormState, formData: FormData): Promise<FormState> {
+  const rawEmail = formData.get("email");
+  const rawName = formData.get("name");
+
+  const validatedFields = subscribeSchema.safeParse({
+    email: rawEmail,
+    name: rawName,
+  });
+
+  if (!validatedFields.success) {
+    const errorMessages = validatedFields.error.flatten().fieldErrors;
+    const firstError = Object.values(errorMessages)[0]?.[0] || "Dados inválidos.";
+    return { success: false, message: firstError };
+  }
+
+  const { email, name } = validatedFields.data;
+  const parsedName = name && name.trim() !== "" ? name.trim() : "Dev";
+
+  try {
+    // Espaço reservado para persistência: await db.subscriber.create({...})
+
+    const { error } = await resend.emails.send({
+      from: "Newsletter Técnica <onboarding@resend.dev>", // Altere para seu domínio homologado
+      to: [email.toLowerCase().trim()],
+      subject: "Inscrição Confirmada! 🚀",
+      react: WelcomeEmail({ name: parsedName }),
+    });
+
+    if (error) {
+      console.error("❌ Erro retornado pela API do Resend:", error);
+      return { success: false, message: "Ocorreu um erro ao processar o envio. Tente novamente." };
+    }
+
+    return { success: true, message: "🎉 Sucesso! Verifique sua caixa de entrada para confirmar a inscrição." };
+
+  } catch (err) {
+    console.error("💥 Falha crítica interna no servidor:", err);
+    return { success: false, message: "Erro interno no servidor. Por favor, tente mais tarde." };
+  }
+}
+
+
+--- ARQUIVO: app/components/SubscribeForm.tsx ---
+"use client";
+
+import { useActionState } from "react";
+import { subscribeUser, FormState } from "../actions/subscribe";
+
+const initialState: FormState = {
+  success: false,
+  message: "",
+};
+
+export function SubscribeForm() {
+  const [state, formAction, isPending] = useActionState(subscribeUser, initialState);
+
+  return (
+    <div className="w-full max-w-md mx-auto p-6 bg-white rounded-2xl shadow-xl border border-gray-100">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-950 tracking-tight">Fique por dentro</h2>
+        <p className="text-sm text-gray-500 mt-1">
+          Inscreva-se para receber artigos aprofundados sobre arquitetura e desenvolvimento de software.
+        </p>
+      </div>
+
+      <form action={formAction} className="space-y-4">
+        <div>
+          <label htmlFor="name" className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1">
+            Nome (Opcional)
+          </label>
+          <input
+            id="name"
+            type="text"
+            name="name"
+            disabled={isPending}
+            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 disabled:opacity-60 transition text-black"
+            placeholder="Ex: Alexander Costa"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1">
+            E-mail <span className="text-red-500">*</span>
+          </label>
+          <input
+            id="email"
+            type="email"
+            name="email"
+            required
+            disabled={isPending}
+            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 disabled:opacity-60 transition text-black"
+            placeholder="seu.email@provedor.com"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={isPending}
+          className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-medium text-sm rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition active:scale-[0.98]"
+        >
+          {isPending ? "Processando inscrição..." : "Inscrever-se na Lista"}
+        </button>
+
+        {state.message && (
+          <div
+            className={`p-3 rounded-lg text-sm font-medium text-center mt-4 border ${
+              state.success
+                ? "bg-emerald-50 border-emerald-100 text-emerald-700"
+                : "bg-rose-50 border-rose-100 text-rose-700"
+            }`}
+          >
+            {state.message}
+          </div>
+        )}
+      </form>
+    </div>
+  );
+}
+
+
+--- ARQUIVO: app/page.tsx ---
+import { SubscribeForm } from "./components/SubscribeForm";
+
+export default function HomePage() {
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col justify-center items-center px-4 py-12">
+      <div className="w-full max-w-3xl text-center mb-10">
+        <span className="px-3 py-1 text-xs font-semibold bg-indigo-100 text-indigo-800 rounded-full tracking-wide uppercase">
+          Conteúdo Exclusivo
+        </span>
+        <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-950 tracking-tight mt-4 mb-3">
+          Eleve o nível do seu código semanalmente
+        </h1>
+        <p className="text-lg text-gray-600 max-w-xl mx-auto">
+          Artigos técnicos, padrões de projeto, microservices e arquitetura limpa sem superficialidades.
+        </p>
+      </div>
+
+      <SubscribeForm />
+    </main>
+  );
+}
+
+
+--- ARQUIVO: .env.local ---
+# Token gerado na sua conta do Resend (https://resend.com)
+RESEND_API_KEY=re_123456789abcdefghijklmnopqrstuvwxyz
+
+===============================================================================
+FIM DO ARQUIVO DE INFRAESTRUTURA
+===============================================================================

@@ -1,0 +1,32 @@
+{
+  "name": "newsletter",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "tsc --noEmit",
+    "check:supabase": "node scripts/check-supabase.js"
+  },
+  "dependencies": {
+    "@react-email/components": "latest",
+    "@react-email/render": "^2.0.8",
+    "@supabase/supabase-js": "^2.108.0",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "resend": "latest",
+    "ws": "^8.21.0",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@types/ws": "^8.18.1",
+    "tailwindcss": "latest",
+    "typescript": "latest"
+  }
+}

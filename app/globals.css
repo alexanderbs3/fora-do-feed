@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --ink: #14110f;
+  --paper: #f1e7d0;
+  --acid: #d8ff3e;
+  --signal: #ff4d1d;
+  --night: #080b12;
+}
+
+body {
+  margin: 0;
+  background: var(--night);
+  color: var(--paper);
+  font-family: var(--font-serif), Georgia, serif;
+}
+
+::selection {
+  background: var(--acid);
+  color: var(--ink);
+}
