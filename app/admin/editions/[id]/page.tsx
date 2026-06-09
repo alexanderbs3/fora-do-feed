@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { getEditionStats } from "@/lib/edition-stats";
 import { getEditionById } from "@/lib/editions";
 import { approveEditionAction, saveDraftEditionAction, sendEditionTestAction } from "../actions";
 
@@ -27,6 +28,7 @@ export default async function EditionPage({ params, searchParams }: EditionPageP
   if (!edition) {
     notFound();
   }
+  const stats = await getEditionStats(edition);
 
   return (
     <main className="min-h-screen bg-[#080b12] px-5 py-10 text-[#f1e7d0] sm:px-8">
@@ -56,6 +58,36 @@ export default async function EditionPage({ params, searchParams }: EditionPageP
             <p>Aprovada: {formatDate(edition.approvedAt)}</p>
             <p>Enviada: {formatDate(edition.sentAt)}</p>
           </div>
+
+          {stats && (
+            <div className="mt-6 border border-[#d8ff3e]/25 bg-[#d8ff3e]/10 p-5">
+              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+                <div>
+                  <p className="font-[var(--font-display)] text-xs uppercase tracking-[0.22em] text-[#d8ff3e]">Estatísticas da edição</p>
+                  <p className="mt-2 text-sm text-[#f1e7d0]/65">Dados do cron de envio e descadastros até a próxima edição enviada.</p>
+                </div>
+                {stats.requestId && <p className="text-xs text-[#f1e7d0]/45">request {stats.requestId}</p>}
+              </div>
+              <div className="mt-5 grid gap-3 sm:grid-cols-5">
+                {[
+                  ["Checados", stats.checked],
+                  ["Enviados", stats.sent],
+                  ["Falhas", stats.failed],
+                  ["Pulados", stats.skipped],
+                  ["Descadastros", stats.unsubscribedAfterSend],
+                ].map(([label, value]) => (
+                  <div key={label} className="border border-[#f1e7d0]/12 bg-[#080b12]/35 p-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-[#f1e7d0]/45">{label}</p>
+                    <p className="mt-2 font-[var(--font-display)] text-3xl text-[#f8f0dc]">{value}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 grid gap-2 text-xs text-[#f1e7d0]/50 sm:grid-cols-2">
+                <p>Execução: {formatDate(stats.startedAt)}</p>
+                <p>Duração: {typeof stats.durationMs === "number" ? `${stats.durationMs}ms` : "-"}</p>
+              </div>
+            </div>
+          )}
 
           {edition.status !== "draft" && (
             <div className="mt-6 border border-[#f1e7d0]/15 bg-[#f1e7d0]/5 p-4 text-sm leading-6 text-[#f1e7d0]/70">
