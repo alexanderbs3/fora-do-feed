@@ -57,6 +57,13 @@ export default async function EditionPage({ params, searchParams }: EditionPageP
             <p>Enviada: {formatDate(edition.sentAt)}</p>
           </div>
 
+          {edition.status !== "draft" && (
+            <div className="mt-6 border border-[#f1e7d0]/15 bg-[#f1e7d0]/5 p-4 text-sm leading-6 text-[#f1e7d0]/70">
+              Esta edição está <span className="text-[#d8ff3e]">{edition.status}</span> e não pode mais ser editada.
+              Apenas edições em <span className="text-[#d8ff3e]">draft</span> exibem campos de edição, remoção de itens e aprovação.
+            </div>
+          )}
+
           <div className="mt-8 grid gap-4 border border-[#f1e7d0]/12 bg-[#080b12]/40 p-5 sm:grid-cols-[1fr_auto]">
             <form action={sendEditionTestAction} className="flex flex-col gap-3 sm:flex-row">
               <input type="hidden" name="id" value={edition.id} />
