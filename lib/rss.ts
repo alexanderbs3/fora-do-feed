@@ -26,22 +26,31 @@ const relevanceTerms = [
   "artificial intelligence",
   "software",
   "developer",
+  "developers",
+  "code",
+  "coding",
   "programming",
   "security",
+  "cybersecurity",
   "cloud",
   "open source",
-  "startup",
-  "data",
   "privacy",
   "machine learning",
 ];
 
 const clickbaitTerms = ["shocking", "you won't believe", "unbelievable", "secret", "hack that", "mind-blowing"];
 
+function includesTerm(text: string, term: string) {
+  const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`\\b${escapedTerm}\\b`, "i").test(text);
+}
+
 function decodeXml(value: string) {
   return value
     .replaceAll("<![CDATA[", "")
     .replaceAll("]]>", "")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([a-f0-9]+);/gi, (_, code) => String.fromCharCode(parseInt(code, 16)))
     .replaceAll("&amp;", "&")
     .replaceAll("&quot;", '"')
     .replaceAll("&#39;", "'")
@@ -75,8 +84,12 @@ function scoreItem(input: { title: string; summary: string; publishedAt: string 
   const publishedAt = input.publishedAt ? new Date(input.publishedAt).getTime() : now;
   const ageDays = Math.max((now - publishedAt) / (24 * 60 * 60 * 1000), 0);
   const recency = Math.max(0, 7 - Math.floor(ageDays));
-  const relevance = relevanceTerms.reduce((total, term) => total + (text.includes(term) ? 3 : 0), 0);
-  const clickbaitPenalty = clickbaitTerms.some((term) => text.includes(term)) ? 6 : 0;
+  const relevance = relevanceTerms.reduce((total, term) => total + (includesTerm(text, term) ? 3 : 0), 0);
+  const clickbaitPenalty = clickbaitTerms.some((term) => includesTerm(text, term)) ? 6 : 0;
+
+  if (relevance === 0) {
+    return 0;
+  }
 
   return Math.max(0, input.source.trust + recency + relevance - clickbaitPenalty);
 }
@@ -129,6 +142,10 @@ export async function fetchRecentNews(days = 7) {
     for (const item of result.value) {
       const publishedAt = item.publishedAt ? new Date(item.publishedAt).getTime() : Date.now();
       if (publishedAt < since) {
+        continue;
+      }
+
+      if (item.score <= 0) {
         continue;
       }
 
