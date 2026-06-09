@@ -10,24 +10,27 @@
     "check:supabase": "node scripts/check-supabase.js",
     "check:resend": "node scripts/check-resend.js"
   },
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
-    "@react-email/components": "latest",
+    "@react-email/components": "1.0.12",
     "@react-email/render": "^2.0.8",
     "@supabase/supabase-js": "^2.108.0",
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "resend": "latest",
+    "next": "16.2.7",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "resend": "6.12.4",
     "ws": "^8.21.0",
-    "zod": "latest"
+    "zod": "4.4.3"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "latest",
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
+    "@tailwindcss/postcss": "4.3.0",
+    "@types/node": "25.9.2",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
     "@types/ws": "^8.18.1",
-    "tailwindcss": "latest",
-    "typescript": "latest"
+    "tailwindcss": "4.3.0",
+    "typescript": "6.0.3"
   }
 }
