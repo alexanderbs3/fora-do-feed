@@ -1,5 +1,10 @@
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { listCronRuns } from "@/lib/cron-runs";
+import { triggerBuildWeeklyAction, triggerSendWeeklyAction } from "./actions";
+
+type CronRunsPageProps = {
+  searchParams: Promise<{ trigger?: string; status?: string; message?: string }>;
+};
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -42,7 +47,8 @@ function statusClass(status: string) {
   return "text-[#f1e7d0]/60";
 }
 
-export default async function CronRunsPage() {
+export default async function CronRunsPage({ searchParams }: CronRunsPageProps) {
+  const feedback = await searchParams;
   const isAuthenticated = await isAdminAuthenticated();
 
   if (!isAuthenticated) {
@@ -77,6 +83,41 @@ export default async function CronRunsPage() {
             <a className="underline" href="/admin">Admin</a>
             <a className="underline" href="/admin/editions">Edições</a>
           </div>
+        </div>
+
+        {feedback.message && (
+          <div className={`mb-6 border p-4 text-sm ${feedback.status === "error" ? "border-[#ffb29d]/35 bg-[#ffb29d]/10 text-[#ffd6ca]" : "border-[#d8ff3e]/35 bg-[#d8ff3e]/10 text-[#f3ffd1]"}`}>
+            <span className="font-[var(--font-display)] text-xs uppercase tracking-[0.18em]">
+              {feedback.trigger || "cron"}
+            </span>
+            <p className="mt-2">{feedback.message}</p>
+          </div>
+        )}
+
+        <div className="mb-8 grid gap-4 md:grid-cols-2">
+          <form action={triggerBuildWeeklyAction} className="border border-[#f1e7d0]/15 bg-[#f1e7d0]/5 p-5">
+            <h2 className="font-[var(--font-display)] text-2xl tracking-[-0.04em] text-[#f8f0dc]">Gerar rascunho</h2>
+            <p className="mt-2 text-sm text-[#f1e7d0]/65">
+              Executa o mesmo cron de segunda-feira e cria ou atualiza o draft se não houver edição aprovada ou enviada.
+            </p>
+            <button className="mt-5 bg-[#d8ff3e] px-4 py-3 font-[var(--font-display)] text-xs uppercase tracking-[0.2em] text-[#14110f]" type="submit">
+              Rodar build-weekly
+            </button>
+          </form>
+
+          <form action={triggerSendWeeklyAction} className="border border-[#f1e7d0]/15 bg-[#f1e7d0]/5 p-5">
+            <h2 className="font-[var(--font-display)] text-2xl tracking-[-0.04em] text-[#f8f0dc]">Enviar aprovada</h2>
+            <p className="mt-2 text-sm text-[#f1e7d0]/65">
+              Executa o cron de envio. Só envia se existir edição aprovada; drafts nunca são disparados.
+            </p>
+            <label className="mt-4 flex gap-3 text-sm text-[#f1e7d0]/70">
+              <input className="mt-1 accent-[#d8ff3e]" name="confirm" type="checkbox" value="yes" />
+              Confirmo que quero executar o envio agora.
+            </label>
+            <button className="mt-5 border border-[#ffb29d]/45 px-4 py-3 font-[var(--font-display)] text-xs uppercase tracking-[0.2em] text-[#ffcabd]" type="submit">
+              Rodar send-weekly
+            </button>
+          </form>
         </div>
 
         <div className="overflow-x-auto border border-[#f1e7d0]/15">
