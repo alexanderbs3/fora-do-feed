@@ -13,8 +13,19 @@ const serif = Fraunces({
   variable: "--font-serif",
 });
 
+function getMetadataBase() {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://fora-do-feed.com";
+  const normalizedUrl = appUrl.startsWith("http://") || appUrl.startsWith("https://") ? appUrl : `https://${appUrl}`;
+
+  try {
+    return new URL(normalizedUrl);
+  } catch {
+    return new URL("https://fora-do-feed.com");
+  }
+}
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://fora-do-feed.com"),
+  metadataBase: getMetadataBase(),
   title: {
     default: "Fora do Feed",
     template: "%s | Fora do Feed",
