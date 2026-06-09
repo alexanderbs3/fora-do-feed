@@ -1,20 +1,14 @@
 import { render } from "@react-email/render";
 import WeeklyNewsletterEmail from "@/emails/weekly/WeeklyNewsletterEmail";
+import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getUnsubscribeUrl } from "@/lib/urls";
 
 type PreviewRouteProps = {
   params: Promise<{ week: string }>;
 };
 
-function isAuthorized(request: Request) {
-  const adminSecret = process.env.ADMIN_SECRET;
-  const secret = new URL(request.url).searchParams.get("secret");
-
-  return Boolean(adminSecret && secret === adminSecret);
-}
-
-export async function GET(request: Request, { params }: PreviewRouteProps) {
-  if (!isAuthorized(request)) {
+export async function GET(_request: Request, { params }: PreviewRouteProps) {
+  if (!(await isAdminAuthenticated())) {
     return new Response("Unauthorized", { status: 401 });
   }
 

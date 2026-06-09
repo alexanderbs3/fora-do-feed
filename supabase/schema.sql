@@ -33,3 +33,37 @@ alter table public.subscriber_events enable row level security;
 grant usage on schema public to service_role;
 grant select, insert, update, delete on public.subscribers to service_role;
 grant select, insert, update, delete on public.subscriber_events to service_role;
+
+create table if not exists public.newsletter_editions (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  slug text not null unique,
+  status text not null default 'draft' check (status in ('draft', 'approved', 'sent')),
+  intro text not null,
+  items jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  approved_at timestamptz,
+  sent_at timestamptz
+);
+
+create table if not exists public.news_items (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  url text not null unique,
+  source text not null,
+  published_at timestamptz,
+  summary text,
+  score integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists newsletter_editions_status_created_at_idx on public.newsletter_editions (status, created_at desc);
+create index if not exists newsletter_editions_slug_idx on public.newsletter_editions (slug);
+create index if not exists news_items_score_created_at_idx on public.news_items (score desc, created_at desc);
+create index if not exists news_items_published_at_idx on public.news_items (published_at desc);
+
+alter table public.newsletter_editions enable row level security;
+alter table public.news_items enable row level security;
+
+grant select, insert, update, delete on public.newsletter_editions to service_role;
+grant select, insert, update, delete on public.news_items to service_role;

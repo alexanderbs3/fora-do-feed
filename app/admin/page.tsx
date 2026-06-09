@@ -1,7 +1,9 @@
 import { getSubscriberStats, getSubscribers } from "@/lib/subscribers";
+import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { loginAdmin, logoutAdmin } from "./actions";
 
 type AdminPageProps = {
-  searchParams: Promise<{ secret?: string }>;
+  searchParams: Promise<{ error?: string }>;
 };
 
 function formatDate(value?: string) {
@@ -16,15 +18,28 @@ function formatDate(value?: string) {
 }
 
 export default async function AdminPage({ searchParams }: AdminPageProps) {
-  const { secret = "" } = await searchParams;
-  const adminSecret = process.env.ADMIN_SECRET;
+  const { error } = await searchParams;
+  const isAuthenticated = await isAdminAuthenticated();
 
-  if (!adminSecret || secret !== adminSecret) {
+  if (!isAuthenticated) {
     return (
       <main className="min-h-screen bg-[#080b12] px-5 py-12 text-[#f1e7d0]">
-        <section className="mx-auto max-w-3xl">
+        <section className="mx-auto max-w-md border border-[#f1e7d0]/15 bg-[#f1e7d0]/5 p-6">
           <h1 className="font-[var(--font-display)] text-5xl tracking-[-0.06em]">Admin bloqueado</h1>
-          <p className="mt-5 text-[#f1e7d0]/70">Acesse com o parâmetro correto: /admin?secret=SEU_ADMIN_SECRET</p>
+          <p className="mt-5 text-[#f1e7d0]/70">Entre com o segredo administrativo para criar uma sessão segura.</p>
+          <form action={loginAdmin} className="mt-6 space-y-4">
+            <input
+              name="secret"
+              type="password"
+              required
+              className="w-full border border-[#f1e7d0]/20 bg-[#f1e7d0]/8 px-4 py-3 text-[#fff7e8] outline-none focus:border-[#d8ff3e]"
+              placeholder="ADMIN_SECRET"
+            />
+            {error && <p className="text-sm text-[#ffb29d]">Segredo inválido.</p>}
+            <button className="w-full bg-[#d8ff3e] px-4 py-3 font-[var(--font-display)] text-xs uppercase tracking-[0.2em] text-[#14110f]">
+              Entrar
+            </button>
+          </form>
         </section>
       </main>
     );
@@ -49,9 +64,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               Newsletter
             </h1>
           </div>
-          <a className="text-sm text-[#d8ff3e] underline" href={`/email-preview/weekly/1?secret=${encodeURIComponent(secret)}`} target="_blank">
-            Preview Semana 1
-          </a>
+          <div className="flex flex-wrap gap-4 text-sm text-[#d8ff3e]">
+            <a className="underline" href="/admin/editions">Edições</a>
+            <a className="underline" href="/admin/export/subscribers">Exportar CSV</a>
+            <a className="underline" href="/email-preview/weekly/1" target="_blank">Preview Semana 1</a>
+            <form action={logoutAdmin}>
+              <button className="underline" type="submit">Sair</button>
+            </form>
+          </div>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-5">

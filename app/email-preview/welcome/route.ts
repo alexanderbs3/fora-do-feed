@@ -1,16 +1,10 @@
 import { render } from "@react-email/render";
 import WelcomeEmail from "@/emails/WelcomeEmail";
+import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getUnsubscribeUrl } from "@/lib/urls";
 
-function isAuthorized(request: Request) {
-  const adminSecret = process.env.ADMIN_SECRET;
-  const secret = new URL(request.url).searchParams.get("secret");
-
-  return Boolean(adminSecret && secret === adminSecret);
-}
-
-export async function GET(request: Request) {
-  if (!isAuthorized(request)) {
+export async function GET() {
+  if (!(await isAdminAuthenticated())) {
     return new Response("Unauthorized", { status: 401 });
   }
 

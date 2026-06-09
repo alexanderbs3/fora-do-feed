@@ -3,6 +3,8 @@
 import { useActionState, useEffect } from "react";
 import { FormState, subscribeUser } from "../actions/subscribe";
 
+const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
 const initialState: FormState = {
   success: false,
   message: "",
@@ -25,6 +27,7 @@ export function SubscribeForm() {
 
   return (
     <div className="mx-auto w-full max-w-md border border-[#f1e7d0]/20 bg-[#f1e7d0]/10 p-4 shadow-[18px_18px_0_rgba(216,255,62,0.12)] backdrop-blur-xl sm:p-6">
+      {turnstileSiteKey && <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />}
       <div className="border border-[#f1e7d0]/18 bg-[#080b12]/72 p-5 sm:p-7">
         <div className="mb-7 flex items-start justify-between gap-5">
           <div>
@@ -80,6 +83,8 @@ export function SubscribeForm() {
             <span className="relative z-10">{isPending ? "Processando..." : "Quero receber"}</span>
             <span className="absolute inset-y-0 left-0 w-0 bg-[#f8f0dc] transition-all duration-300 group-hover:w-full" />
           </button>
+
+          {turnstileSiteKey && <div className="cf-turnstile" data-sitekey={turnstileSiteKey} data-theme="dark" />}
 
           {state.message && (
             <div

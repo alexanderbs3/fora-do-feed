@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
-import WeeklyNewsletterEmail, { getWeeklyNewsletterIssue } from "@/emails/weekly";
-import { getDueWeeklySubscribers, markWeeklyEmailFailed, markWeeklyEmailSent } from "@/lib/subscribers";
+import { getLatestApprovedEdition, markEditionSent, renderEditionHtml } from "@/lib/editions";
+import { getSubscribers, markWeeklyEmailFailed, markWeeklyEmailSent } from "@/lib/subscribers";
 import { getUnsubscribeUrl } from "@/lib/urls";
 
 export const dynamic = "force-dynamic";
@@ -130,46 +130,66 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const edition = await getLatestApprovedEdition();
+
+    if (!edition) {
+      const durationMs = Date.now() - startedAt.getTime();
+      const response = {
+        success: true,
+        requestId,
+        isVercelCron: auth.isVercelCron,
+        schedule: auth.schedule,
+        startedAt: startedAt.toISOString(),
+        durationMs,
+        reason: "No approved edition available",
+        checked: 0,
+        sent: 0,
+        skipped: 0,
+        failed: 0,
+        errors: [] as CronError[],
+      };
+
+      logCron("info", "Cron finished without sending because there is no approved edition", response);
+      return NextResponse.json(response);
+    }
+
     const resend = new Resend(resendApiKey);
-    const dueSubscribers = await getDueWeeklySubscribers(startedAt);
+    const activeSubscribers = (await getSubscribers()).filter((subscriber) => subscriber.status === "active");
     const errors: CronError[] = [];
     let sent = 0;
     let skipped = 0;
 
-    logCron("info", "Due subscribers loaded", {
+    logCron("info", "Approved edition and active subscribers loaded", {
       requestId,
-      checked: dueSubscribers.length,
+      editionId: edition.id,
+      editionTitle: edition.title,
+      checked: activeSubscribers.length,
     });
 
-    for (const { subscriber, dueWeek } of dueSubscribers) {
-      const issue = getWeeklyNewsletterIssue(dueWeek);
+    for (const subscriber of activeSubscribers) {
+      const dueWeek = edition.items.length;
       const maskedEmail = maskEmail(subscriber.email);
 
-      if (!issue) {
+      if (edition.items.length === 0) {
         skipped += 1;
-        logCron("warn", "Weekly issue not found for due subscriber", {
+        logCron("warn", "Approved edition has no items", {
           requestId,
-          email: maskedEmail,
-          dueWeek,
+          editionId: edition.id,
         });
-        continue;
+        break;
       }
 
       logCron("info", "Sending weekly email", {
         requestId,
         email: maskedEmail,
-        week: dueWeek,
+        editionId: edition.id,
       });
 
       const { error } = await resend.emails.send({
         from,
         to: [subscriber.email],
-        subject: issue.subject,
-        react: WeeklyNewsletterEmail({
-          name: subscriber.name,
-          week: dueWeek,
-          unsubscribeUrl: getUnsubscribeUrl(subscriber.unsubscribeToken),
-        }),
+        subject: edition.title,
+        html: renderEditionHtml(edition, getUnsubscribeUrl(subscriber.unsubscribeToken)),
       });
 
       if (error) {
@@ -178,7 +198,7 @@ export async function GET(request: NextRequest) {
         logCron("error", "Resend rejected weekly email", {
           requestId,
           email: maskedEmail,
-          week: dueWeek,
+          editionId: edition.id,
           message,
         });
 
@@ -190,7 +210,7 @@ export async function GET(request: NextRequest) {
           logCron("error", "Failed to record weekly email failure", {
             requestId,
             email: maskedEmail,
-            week: dueWeek,
+            editionId: edition.id,
             message: markFailedMessage,
           });
         }
@@ -204,7 +224,7 @@ export async function GET(request: NextRequest) {
         logCron("info", "Weekly email sent and recorded", {
           requestId,
           email: maskedEmail,
-          week: dueWeek,
+          editionId: edition.id,
         });
       } catch (markSentError) {
         const message = getErrorMessage(markSentError);
@@ -212,21 +232,27 @@ export async function GET(request: NextRequest) {
         logCron("error", "Email was sent but could not be recorded", {
           requestId,
           email: maskedEmail,
-          week: dueWeek,
+          editionId: edition.id,
           message,
         });
       }
+    }
+
+    if (sent > 0 || activeSubscribers.length === 0) {
+      await markEditionSent(edition.id);
     }
 
     const durationMs = Date.now() - startedAt.getTime();
     const response = {
       success: errors.length === 0,
       requestId,
+      editionId: edition.id,
+      editionTitle: edition.title,
       isVercelCron: auth.isVercelCron,
       schedule: auth.schedule,
       startedAt: startedAt.toISOString(),
       durationMs,
-      checked: dueSubscribers.length,
+      checked: activeSubscribers.length,
       sent,
       skipped,
       failed: errors.length,

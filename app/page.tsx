@@ -52,6 +52,13 @@ export default function HomePage() {
           <p className="mx-auto mt-5 max-w-md text-center text-xs uppercase tracking-[0.18em] text-[#f1e7d0]/45">
             Sem spam. Sem thread reciclada. Apenas engenharia praticável.
           </p>
+          <p className="mx-auto mt-3 max-w-md text-center text-xs text-[#f1e7d0]/40">
+            Ao se inscrever, você concorda com a nossa{" "}
+            <a className="text-[#d8ff3e] underline" href="/politica-de-privacidade">
+              política de privacidade
+            </a>
+            .
+          </p>
         </div>
       </section>
     </main>

@@ -1,9 +1,12 @@
 "use server";
 
 import { Resend } from "resend";
+import { headers } from "next/headers";
 import { z } from "zod";
 import WelcomeEmail from "@/emails/WelcomeEmail";
 import { markWelcomeEmailSent, upsertSubscriber } from "@/lib/subscribers";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { verifyTurnstile } from "@/lib/turnstile";
 import { getUnsubscribeUrl } from "@/lib/urls";
 
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -26,6 +29,13 @@ export type FormState = {
   success: boolean;
   message: string;
 };
+
+async function getRequestIp() {
+  const headerStore = await headers();
+  const forwardedFor = headerStore.get("x-forwarded-for");
+
+  return forwardedFor?.split(",")[0]?.trim() || headerStore.get("x-real-ip") || "unknown";
+}
 
 function isResendConfigured() {
   return Boolean(resendApiKey && !resendApiKey.includes("123456789abcdefghijklmnopqrstuvwxyz"));
@@ -63,6 +73,18 @@ function getResendErrorMessage(error: unknown) {
 export async function subscribeUser(_prevState: FormState, formData: FormData): Promise<FormState> {
   const rawEmail = formData.get("email");
   const rawName = formData.get("name");
+  const turnstileToken = String(formData.get("cf-turnstile-response") || "");
+  const ip = await getRequestIp();
+
+  const rateLimit = checkRateLimit(`subscribe:${ip}`, 5, 10 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    return { success: false, message: "Muitas tentativas. Aguarde alguns minutos e tente novamente." };
+  }
+
+  const isHuman = await verifyTurnstile(turnstileToken, ip);
+  if (!isHuman) {
+    return { success: false, message: "Confirme que você não é um robô antes de continuar." };
+  }
 
   const validatedFields = subscribeSchema.safeParse({
     email: rawEmail,

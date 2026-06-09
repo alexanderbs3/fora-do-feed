@@ -82,6 +82,8 @@ async function main() {
   const results = [];
   results.push(await checkTable(env, "subscribers"));
   results.push(await checkTable(env, "subscriber_events"));
+  results.push(await checkTable(env, "newsletter_editions"));
+  results.push(await checkTable(env, "news_items"));
 
   if (results.every(Boolean)) {
     console.log("Supabase configurado corretamente para as tabelas da newsletter.");
