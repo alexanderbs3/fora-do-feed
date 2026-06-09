@@ -14,6 +14,12 @@ export type ScoredNewsItem = {
 };
 
 export const rssSources: RssSource[] = [
+  { name: "Tecnoblog", url: "https://tecnoblog.net/feed/", trust: 8 },
+  { name: "Canaltech", url: "https://canaltech.com.br/rss/", trust: 7 },
+  { name: "Olhar Digital", url: "https://olhardigital.com.br/feed/", trust: 7 },
+  { name: "Manual do Usuario", url: "https://manualdousuario.net/feed/", trust: 8 },
+  { name: "Nucleo", url: "https://nucleo.jor.br/rss/", trust: 8 },
+  { name: "Brazil Journal", url: "https://braziljournal.com/feed/", trust: 7 },
   { name: "TechCrunch", url: "https://techcrunch.com/feed/", trust: 8 },
   { name: "The Verge", url: "https://www.theverge.com/rss/index.xml", trust: 8 },
   { name: "Wired", url: "https://www.wired.com/feed/rss", trust: 8 },
@@ -34,9 +40,18 @@ const aiBusinessTerms = [
   "chip",
   "chips",
   "funding",
+  "ia",
+  "inteligência artificial",
+  "investimento",
+  "investimentos",
   "model",
   "models",
+  "modelo",
+  "modelos",
+  "negócio",
+  "negócios",
   "openai",
+  "rodada",
   "startup",
   "startups",
   "venture",
@@ -51,26 +66,41 @@ const developerTerms = [
   "programming",
   "api",
   "database",
+  "desenvolvedor",
+  "desenvolvedores",
+  "infra",
   "infrastructure",
   "linux",
   "open source",
+  "programação",
   "release",
+  "segurança",
 ];
 
 const technologyTerms = [
   "big tech",
   "browser",
+  "dados",
+  "governo",
+  "internet",
+  "lgpd",
   "cloud",
   "platform",
   "platforms",
+  "plataforma",
+  "plataformas",
   "privacy",
+  "privacidade",
   "regulation",
+  "regulação",
+  "regulamentação",
   "security",
   "cybersecurity",
+  "cibersegurança",
   "machine learning",
 ];
 
-const clickbaitTerms = ["shocking", "you won't believe", "unbelievable", "secret", "hack that", "mind-blowing"];
+const clickbaitTerms = ["chocante", "inacreditável", "shocking", "você não vai acreditar", "you won't believe", "unbelievable", "secret", "hack that", "mind-blowing"];
 
 function includesTerm(text: string, term: string) {
   const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
