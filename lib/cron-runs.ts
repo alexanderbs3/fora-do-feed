@@ -44,6 +44,16 @@ function isMissingRunsTable(error: { code?: string; message?: string }) {
   return error.code === "PGRST205" || error.code === "42P01" || Boolean(error.message?.includes("cron_runs"));
 }
 
+async function pruneOldCronRuns() {
+  const supabase = createSupabaseAdmin();
+  const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+  const { error } = await supabase.from("cron_runs").delete().lt("started_at", cutoff);
+
+  if (error && !isMissingRunsTable(error)) {
+    throw new Error(`Erro ao limpar histórico antigo de cron: ${error.message}`);
+  }
+}
+
 export async function recordCronRun(input: {
   name: string;
   status: CronRunStatus;
@@ -67,6 +77,8 @@ export async function recordCronRun(input: {
   if (error && !isMissingRunsTable(error)) {
     throw new Error(`Erro ao registrar execução do cron: ${error.message}`);
   }
+
+  await pruneOldCronRuns();
 }
 
 export async function listCronRuns(limit = 50) {

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
-import { EditionStatus, listEditions } from "@/lib/editions";
+import { EditionStatus, getEditorialNextAction, getLatestEdition, listEditions } from "@/lib/editions";
 import { approveEditionAction, buildDraftAction } from "./actions";
 
 type EditionsPageProps = {
@@ -22,7 +22,8 @@ export default async function EditionsPage({ searchParams }: EditionsPageProps) 
 
   const { status } = await searchParams;
   const selectedStatus = ["draft", "approved", "sent"].includes(String(status)) ? status : undefined;
-  const editions = await listEditions(selectedStatus);
+  const [editions, latestEdition] = await Promise.all([listEditions(selectedStatus), getLatestEdition()]);
+  const nextAction = getEditorialNextAction(latestEdition);
 
   return (
     <main className="min-h-screen bg-[#080b12] px-5 py-10 text-[#f1e7d0] sm:px-8">
@@ -41,6 +42,13 @@ export default async function EditionsPage({ searchParams }: EditionsPageProps) 
               <button className="underline" type="submit">Gerar rascunho</button>
             </form>
           </div>
+        </div>
+
+        <div className="mb-8 border border-[#d8ff3e]/25 bg-[#d8ff3e]/10 p-5">
+          <p className="font-[var(--font-display)] text-xs uppercase tracking-[0.22em] text-[#d8ff3e]">Próxima ação</p>
+          <h2 className="mt-3 font-[var(--font-display)] text-3xl tracking-[-0.05em] text-[#f8f0dc]">{nextAction.label}</h2>
+          <p className="mt-2 max-w-3xl text-sm text-[#f1e7d0]/75">{nextAction.description}</p>
+          <a className="mt-4 inline-block text-sm text-[#d8ff3e] underline" href={nextAction.href}>Abrir etapa</a>
         </div>
 
         <div className="overflow-x-auto border border-[#f1e7d0]/15">

@@ -1,5 +1,6 @@
 import { getSubscriberStats, getSubscribers } from "@/lib/subscribers";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { getEditorialNextAction, getLatestEdition } from "@/lib/editions";
 import { loginAdmin, logoutAdmin } from "./actions";
 
 type AdminPageProps = {
@@ -47,6 +48,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   const subscribers = await getSubscribers();
   const stats = getSubscriberStats(subscribers);
+  const latestEdition = await getLatestEdition();
+  const nextAction = getEditorialNextAction(latestEdition);
   const recentEvents = subscribers
     .flatMap((subscriber) => subscriber.events.map((event) => ({ ...event, email: subscriber.email })))
     .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
@@ -73,6 +76,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <button className="underline" type="submit">Sair</button>
             </form>
           </div>
+        </div>
+
+        <div className="mb-8 border border-[#d8ff3e]/25 bg-[#d8ff3e]/10 p-5">
+          <p className="font-[var(--font-display)] text-xs uppercase tracking-[0.22em] text-[#d8ff3e]">Próxima ação</p>
+          <h2 className="mt-3 font-[var(--font-display)] text-3xl tracking-[-0.05em] text-[#f8f0dc]">{nextAction.label}</h2>
+          <p className="mt-2 max-w-3xl text-sm text-[#f1e7d0]/75">{nextAction.description}</p>
+          <a className="mt-4 inline-block text-sm text-[#d8ff3e] underline" href={nextAction.href}>Abrir etapa</a>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-5">

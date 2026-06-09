@@ -3,6 +3,11 @@ import { fetchRecentNews, ScoredNewsItem } from "@/lib/rss";
 
 export type EditionStatus = "draft" | "approved" | "sent";
 
+export const editionItemLimit = 7;
+
+export const defaultEditionIntro =
+  "Selecionamos os movimentos mais relevantes da semana em tecnologia, software e cultura digital. A ideia é separar sinal de ruído: menos manchete inflada, mais contexto útil.";
+
 export type NewsletterEditionItem = {
   title: string;
   url: string;
@@ -21,6 +26,12 @@ export type NewsletterEdition = {
   createdAt: string;
   approvedAt?: string;
   sentAt?: string;
+};
+
+export type EditorialNextAction = {
+  label: string;
+  description: string;
+  href: string;
 };
 
 type NewsletterEditionRow = {
@@ -78,6 +89,58 @@ export async function listEditions(status?: EditionStatus) {
   }
 
   return ((data || []) as NewsletterEditionRow[]).map(mapEdition);
+}
+
+export async function getLatestEdition() {
+  const supabase = createSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("newsletter_editions")
+    .select("id,title,slug,status,intro,items,created_at,approved_at,sent_at")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    if (isMissingTableError(error)) {
+      return null;
+    }
+
+    throw new Error(`Erro ao carregar última edição: ${error.message}`);
+  }
+
+  return data ? mapEdition(data as NewsletterEditionRow) : null;
+}
+
+export function getEditorialNextAction(edition: NewsletterEdition | null): EditorialNextAction {
+  if (!edition) {
+    return {
+      label: "Gerar rascunho",
+      description: "Ainda não há edição no ciclo atual. Gere um draft a partir das fontes RSS.",
+      href: "/admin/cron-runs",
+    };
+  }
+
+  if (edition.status === "draft") {
+    return {
+      label: "Revisar e aprovar",
+      description: `A edição ${edition.title} está em rascunho e precisa de revisão humana antes do envio.`,
+      href: `/admin/editions/${edition.id}`,
+    };
+  }
+
+  if (edition.status === "approved") {
+    return {
+      label: "Aguardando envio",
+      description: `A edição ${edition.title} está aprovada e pronta para o próximo send-weekly.`,
+      href: "/admin/cron-runs",
+    };
+  }
+
+  return {
+    label: "Ciclo concluído",
+    description: `A edição ${edition.title} já foi enviada. O próximo ciclo começa com um novo rascunho.`,
+    href: "/admin/editions",
+  };
 }
 
 export async function getEditionById(id: string) {
@@ -210,8 +273,8 @@ export async function buildWeeklyDraft() {
   }
 
   const title = `Fora do Feed - ${now.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}`;
-  const intro = "Rascunho gerado automaticamente a partir de fontes RSS. Revise títulos, links e contexto antes de aprovar o envio.";
-  const items = news.slice(0, 7).map((item) => ({
+  const intro = defaultEditionIntro;
+  const items = news.slice(0, editionItemLimit).map((item) => ({
     title: item.title,
     url: item.url,
     source: item.source,

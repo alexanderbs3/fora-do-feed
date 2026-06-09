@@ -19,22 +19,54 @@ export const rssSources: RssSource[] = [
   { name: "Wired", url: "https://www.wired.com/feed/rss", trust: 8 },
   { name: "MIT Technology Review", url: "https://www.technologyreview.com/feed/", trust: 9 },
   { name: "Ars Technica", url: "https://feeds.arstechnica.com/arstechnica/index", trust: 8 },
+  { name: "GitHub Blog", url: "https://github.blog/feed/", trust: 8 },
+  { name: "Cloudflare Blog", url: "https://blog.cloudflare.com/rss/", trust: 8 },
+  { name: "Google Security Blog", url: "https://security.googleblog.com/feeds/posts/default", trust: 8 },
+  { name: "Hacker News", url: "https://hnrss.org/frontpage", trust: 7 },
 ];
 
-const relevanceTerms = [
+const aiBusinessTerms = [
   "ai",
   "artificial intelligence",
+  "agent",
+  "agents",
+  "automation",
+  "chip",
+  "chips",
+  "funding",
+  "model",
+  "models",
+  "openai",
+  "startup",
+  "startups",
+  "venture",
+];
+
+const developerTerms = [
   "software",
   "developer",
   "developers",
   "code",
   "coding",
   "programming",
+  "api",
+  "database",
+  "infrastructure",
+  "linux",
+  "open source",
+  "release",
+];
+
+const technologyTerms = [
+  "big tech",
+  "browser",
+  "cloud",
+  "platform",
+  "platforms",
+  "privacy",
+  "regulation",
   "security",
   "cybersecurity",
-  "cloud",
-  "open source",
-  "privacy",
   "machine learning",
 ];
 
@@ -84,7 +116,10 @@ function scoreItem(input: { title: string; summary: string; publishedAt: string 
   const publishedAt = input.publishedAt ? new Date(input.publishedAt).getTime() : now;
   const ageDays = Math.max((now - publishedAt) / (24 * 60 * 60 * 1000), 0);
   const recency = Math.max(0, 7 - Math.floor(ageDays));
-  const relevance = relevanceTerms.reduce((total, term) => total + (includesTerm(text, term) ? 3 : 0), 0);
+  const aiBusinessScore = aiBusinessTerms.reduce((total, term) => total + (includesTerm(text, term) ? 4 : 0), 0);
+  const developerScore = developerTerms.reduce((total, term) => total + (includesTerm(text, term) ? 3 : 0), 0);
+  const technologyScore = technologyTerms.reduce((total, term) => total + (includesTerm(text, term) ? 2 : 0), 0);
+  const relevance = aiBusinessScore + developerScore + technologyScore;
   const clickbaitPenalty = clickbaitTerms.some((term) => includesTerm(text, term)) ? 6 : 0;
 
   if (relevance === 0) {

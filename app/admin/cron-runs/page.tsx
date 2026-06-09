@@ -1,5 +1,6 @@
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { listCronRuns } from "@/lib/cron-runs";
+import { getEditorialNextAction, getLatestEdition } from "@/lib/editions";
 import { triggerBuildWeeklyAction, triggerSendWeeklyAction } from "./actions";
 
 type CronRunsPageProps = {
@@ -19,9 +20,10 @@ function formatSummary(summary: Record<string, unknown>) {
   const sent = typeof summary.sent === "number" ? summary.sent : undefined;
   const failed = typeof summary.failed === "number" ? summary.failed : undefined;
   const collected = typeof summary.collected === "number" ? summary.collected : undefined;
+  const errors = Array.isArray(summary.errors) ? summary.errors : [];
 
   if (reason) {
-    return reason;
+    return errors.length > 0 ? `${reason} | erros ${errors.length}` : reason;
   }
 
   if (typeof checked === "number") {
@@ -65,7 +67,8 @@ export default async function CronRunsPage({ searchParams }: CronRunsPageProps) 
     );
   }
 
-  const runs = await listCronRuns(80);
+  const [runs, latestEdition] = await Promise.all([listCronRuns(80), getLatestEdition()]);
+  const nextAction = getEditorialNextAction(latestEdition);
 
   return (
     <main className="min-h-screen bg-[#080b12] px-5 py-10 text-[#f1e7d0] sm:px-8">
@@ -83,6 +86,13 @@ export default async function CronRunsPage({ searchParams }: CronRunsPageProps) 
             <a className="underline" href="/admin">Admin</a>
             <a className="underline" href="/admin/editions">Edições</a>
           </div>
+        </div>
+
+        <div className="mb-8 border border-[#d8ff3e]/25 bg-[#d8ff3e]/10 p-5">
+          <p className="font-[var(--font-display)] text-xs uppercase tracking-[0.22em] text-[#d8ff3e]">Próxima ação</p>
+          <h2 className="mt-3 font-[var(--font-display)] text-3xl tracking-[-0.05em] text-[#f8f0dc]">{nextAction.label}</h2>
+          <p className="mt-2 max-w-3xl text-sm text-[#f1e7d0]/75">{nextAction.description}</p>
+          <a className="mt-4 inline-block text-sm text-[#d8ff3e] underline" href={nextAction.href}>Abrir etapa</a>
         </div>
 
         {feedback.message && (
