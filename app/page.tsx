@@ -16,6 +16,9 @@ export default function HomePage() {
               Newsletter Técnica
             </span>
             <span className="text-xs uppercase tracking-[0.32em] text-[#f1e7d0]/60">dev + inteligência artificial</span>
+            <a className="text-xs uppercase tracking-[0.24em] text-[#d8ff3e] underline" href="/arquivo">
+              Arquivo
+            </a>
           </div>
 
           <h1 className="max-w-4xl font-[var(--font-display)] text-5xl leading-[0.86] tracking-[-0.07em] text-[#f8f0dc] sm:text-7xl lg:text-8xl">

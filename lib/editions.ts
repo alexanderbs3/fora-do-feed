@@ -91,6 +91,46 @@ export async function listEditions(status?: EditionStatus) {
   return ((data || []) as NewsletterEditionRow[]).map(mapEdition);
 }
 
+export async function listPublishedEditions(limit = 24) {
+  const supabase = createSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("newsletter_editions")
+    .select("id,title,slug,status,intro,items,created_at,approved_at,sent_at")
+    .eq("status", "sent")
+    .order("sent_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    if (isMissingTableError(error)) {
+      return [];
+    }
+
+    throw new Error(`Erro ao carregar arquivo de edições: ${error.message}`);
+  }
+
+  return ((data || []) as NewsletterEditionRow[]).map(mapEdition);
+}
+
+export async function getPublishedEditionBySlug(slug: string) {
+  const supabase = createSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("newsletter_editions")
+    .select("id,title,slug,status,intro,items,created_at,approved_at,sent_at")
+    .eq("slug", slug)
+    .eq("status", "sent")
+    .maybeSingle();
+
+  if (error) {
+    if (isMissingTableError(error)) {
+      return null;
+    }
+
+    throw new Error(`Erro ao carregar edição publicada: ${error.message}`);
+  }
+
+  return data ? mapEdition(data as NewsletterEditionRow) : null;
+}
+
 export async function getLatestEdition() {
   const supabase = createSupabaseAdmin();
   const { data, error } = await supabase
