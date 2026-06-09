@@ -130,6 +130,32 @@ export async function approveEdition(id: string) {
   }
 }
 
+export async function updateDraftEdition(input: {
+  id: string;
+  title: string;
+  intro: string;
+  items: NewsletterEditionItem[];
+}) {
+  const supabase = createSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("newsletter_editions")
+    .update({
+      title: input.title,
+      intro: input.intro,
+      items: input.items,
+    })
+    .eq("id", input.id)
+    .eq("status", "draft")
+    .select("id,title,slug,status,intro,items,created_at,approved_at,sent_at")
+    .single();
+
+  if (error) {
+    throw new Error(`Erro ao atualizar rascunho: ${error.message}`);
+  }
+
+  return mapEdition(data as NewsletterEditionRow);
+}
+
 export async function markEditionSent(id: string) {
   const supabase = createSupabaseAdmin();
   const sentAt = new Date().toISOString();
