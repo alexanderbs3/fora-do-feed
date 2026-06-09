@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { EditionStatus, listEditions } from "@/lib/editions";
+import { approveEditionAction } from "./actions";
 
 type EditionsPageProps = {
   searchParams: Promise<{ status?: EditionStatus }>;
@@ -49,6 +50,7 @@ export default async function EditionsPage({ searchParams }: EditionsPageProps) 
                 <th className="p-3">Criada</th>
                 <th className="p-3">Aprovada</th>
                 <th className="p-3">Enviada</th>
+                <th className="p-3">Ação</th>
               </tr>
             </thead>
             <tbody>
@@ -60,6 +62,17 @@ export default async function EditionsPage({ searchParams }: EditionsPageProps) 
                   <td className="p-3">{formatDate(edition.createdAt)}</td>
                   <td className="p-3">{formatDate(edition.approvedAt)}</td>
                   <td className="p-3">{formatDate(edition.sentAt)}</td>
+                  <td className="p-3">
+                    <div className="flex items-center gap-3">
+                      <a className="text-[#d8ff3e] underline" href={`/admin/editions/${edition.id}`}>Revisar</a>
+                      {edition.status === "draft" && (
+                        <form action={approveEditionAction}>
+                          <input type="hidden" name="id" value={edition.id} />
+                          <button className="text-[#d8ff3e] underline" type="submit">Aprovar</button>
+                        </form>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
