@@ -1,14 +1,3 @@
-import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Preview,
-  Section,
-  Tailwind,
-  Text,
-} from "@react-email/components";
 import { getAiNewsBrief, getWeeklyNewsletterIssue } from "./content";
 
 type WeeklyNewsletterEmailProps = {
@@ -22,74 +11,84 @@ export function WeeklyNewsletterEmail({ name = "Dev", week = 1, unsubscribeUrl =
   const aiBrief = getAiNewsBrief(week);
 
   return (
-    <Html>
-      <Head />
-      <Preview>{issue.preview}</Preview>
-      <Tailwind>
-        <Body className="m-0 bg-[#080b12] p-0 font-sans text-[#f1e7d0]">
-          <Container className="mx-auto my-8 max-w-2xl rounded-none border border-[#2d3327] bg-[#10141d] p-0">
-            <Section className="border-b border-[#2d3327] bg-[#d8ff3e] px-8 py-5">
-              <Text className="m-0 text-xs font-bold uppercase tracking-[4px] text-[#14110f]">
-                Newsletter Técnica | Semana {issue.week}
-              </Text>
-            </Section>
+    <html>
+      <head />
+      <body style={{ margin: 0, padding: 0, backgroundColor: "#080b12", color: "#f1e7d0", fontFamily: "Arial, sans-serif" }}>
+        <div style={{ display: "none", maxHeight: 0, overflow: "hidden", opacity: 0 }}>{issue.preview}</div>
+        <main
+          style={{
+            maxWidth: "672px",
+            margin: "32px auto",
+            padding: 0,
+            backgroundColor: "#10141d",
+            border: "1px solid #2d3327",
+          }}
+        >
+          <section style={{ padding: "20px 32px", backgroundColor: "#d8ff3e", borderBottom: "1px solid #2d3327" }}>
+            <p style={{ margin: 0, color: "#14110f", fontSize: "12px", fontWeight: 700, letterSpacing: "4px", textTransform: "uppercase" }}>
+              Newsletter Técnica | Semana {issue.week}
+            </p>
+          </section>
 
-            <Section className="px-8 py-8">
-              <Text className="m-0 mb-4 text-sm text-[#d8ff3e]">Olá, {name}.</Text>
-              <Heading className="m-0 mb-6 text-4xl font-black leading-[1.02] tracking-[-2px] text-[#f8f0dc]">
-                {issue.title}
-              </Heading>
+          <section style={{ padding: "32px" }}>
+            <p style={{ margin: "0 0 16px", color: "#d8ff3e", fontSize: "14px" }}>Olá, {name}.</p>
+            <h1 style={{ margin: "0 0 24px", color: "#f8f0dc", fontSize: "36px", lineHeight: "38px", fontWeight: 900 }}>
+              {issue.title}
+            </h1>
 
-              <Text className="m-0 mb-5 text-base leading-7 text-[#f1e7d0]">{issue.intro}</Text>
+            <p style={{ margin: "0 0 20px", color: "#f1e7d0", fontSize: "16px", lineHeight: "28px" }}>{issue.intro}</p>
 
-              <Section className="my-6 border-l-4 border-[#ff4d1d] bg-[#ff4d1d]/10 px-5 py-4">
-                <Text className="m-0 mb-2 text-xs font-bold uppercase tracking-[3px] text-[#ffb29d]">O problema</Text>
-                <Text className="m-0 text-base leading-7 text-[#f1e7d0]">{issue.problem}</Text>
-              </Section>
+            <section style={{ margin: "24px 0", padding: "16px 20px", backgroundColor: "rgba(255, 77, 29, 0.1)", borderLeft: "4px solid #ff4d1d" }}>
+              <p style={{ margin: "0 0 8px", color: "#ffb29d", fontSize: "12px", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase" }}>
+                O problema
+              </p>
+              <p style={{ margin: 0, color: "#f1e7d0", fontSize: "16px", lineHeight: "28px" }}>{issue.problem}</p>
+            </section>
 
-              <Text className="m-0 mb-6 text-base leading-7 text-[#f1e7d0]">{issue.explanation}</Text>
+            <p style={{ margin: "0 0 24px", color: "#f1e7d0", fontSize: "16px", lineHeight: "28px" }}>{issue.explanation}</p>
 
-              <Section className="my-6 border border-[#2d3327] bg-[#0b0f17] px-5 py-5">
-                <Text className="m-0 mb-2 text-xs font-bold uppercase tracking-[3px] text-[#d8ff3e]">
-                  {issue.exampleTitle}
-                </Text>
-                <Text className="m-0 text-base leading-7 text-[#f1e7d0]">{issue.example}</Text>
-              </Section>
+            <section style={{ margin: "24px 0", padding: "20px", backgroundColor: "#0b0f17", border: "1px solid #2d3327" }}>
+              <p style={{ margin: "0 0 8px", color: "#d8ff3e", fontSize: "12px", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase" }}>
+                {issue.exampleTitle}
+              </p>
+              <p style={{ margin: 0, color: "#f1e7d0", fontSize: "16px", lineHeight: "28px" }}>{issue.example}</p>
+            </section>
 
-              <Text className="m-0 mb-3 text-xs font-bold uppercase tracking-[3px] text-[#d8ff3e]">Checklist da semana</Text>
-              {issue.checklist.map((item) => (
-                <Text key={item} className="m-0 mb-2 text-base leading-7 text-[#f1e7d0]">
+            <p style={{ margin: "0 0 12px", color: "#d8ff3e", fontSize: "12px", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase" }}>
+              Checklist da semana
+            </p>
+            {issue.checklist.map((item) => (
+              <p key={item} style={{ margin: "0 0 8px", color: "#f1e7d0", fontSize: "16px", lineHeight: "28px" }}>
+                - {item}
+              </p>
+            ))}
+
+            <section style={{ margin: "32px 0", padding: "20px", backgroundColor: "rgba(216, 255, 62, 0.1)", border: "1px solid #d8ff3e" }}>
+              <p style={{ margin: "0 0 12px", color: "#d8ff3e", fontSize: "12px", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase" }}>
+                Notícias de inteligência artificial
+              </p>
+              <h2 style={{ margin: "0 0 16px", color: "#f8f0dc", fontSize: "24px", lineHeight: "32px", fontWeight: 900 }}>{aiBrief.title}</h2>
+              {aiBrief.items.map((item) => (
+                <p key={item} style={{ margin: "0 0 12px", color: "#f1e7d0", fontSize: "16px", lineHeight: "28px" }}>
                   - {item}
-                </Text>
+                </p>
               ))}
+            </section>
 
-              <Section className="my-8 border border-[#d8ff3e] bg-[#d8ff3e]/10 px-5 py-5">
-                <Text className="m-0 mb-3 text-xs font-bold uppercase tracking-[3px] text-[#d8ff3e]">
-                  Notícias de inteligência artificial
-                </Text>
-                <Heading className="m-0 mb-4 text-2xl font-black leading-tight text-[#f8f0dc]">{aiBrief.title}</Heading>
-                {aiBrief.items.map((item) => (
-                  <Text key={item} className="m-0 mb-3 text-base leading-7 text-[#f1e7d0]">
-                    - {item}
-                  </Text>
-                ))}
-              </Section>
+            <section style={{ marginTop: "32px", paddingTop: "24px", borderTop: "1px solid #2d3327" }}>
+              <p style={{ margin: 0, color: "#f1e7d0", fontSize: "16px", lineHeight: "28px" }}>{issue.closing}</p>
+            </section>
+          </section>
 
-              <Section className="mt-8 border-t border-[#2d3327] pt-6">
-                <Text className="m-0 text-base leading-7 text-[#f1e7d0]">{issue.closing}</Text>
-              </Section>
-            </Section>
-
-            <Section className="border-t border-[#2d3327] px-8 py-5">
-              <Text className="m-0 text-xs leading-5 text-[#f1e7d0]/60">
-                Você recebeu este e-mail porque se inscreveu na Newsletter Técnica. Guarde esta mensagem e revise o
-                checklist quando estiver praticando. Se quiser sair da lista, acesse: {unsubscribeUrl}
-              </Text>
-            </Section>
-          </Container>
-        </Body>
-      </Tailwind>
-    </Html>
+          <section style={{ padding: "20px 32px", borderTop: "1px solid #2d3327" }}>
+            <p style={{ margin: 0, color: "rgba(241, 231, 208, 0.6)", fontSize: "12px", lineHeight: "20px" }}>
+              Você recebeu este e-mail porque se inscreveu na Newsletter Técnica. Guarde esta mensagem e revise o
+              checklist quando estiver praticando. Se quiser sair da lista, acesse: {unsubscribeUrl}
+            </p>
+          </section>
+        </main>
+      </body>
+    </html>
   );
 }
 

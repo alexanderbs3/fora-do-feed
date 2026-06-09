@@ -1,74 +1,74 @@
-import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Link,
-  Preview,
-  Tailwind,
-  Text,
-} from "@react-email/components";
-
 interface WelcomeEmailProps {
   name?: string;
   unsubscribeUrl?: string;
 }
 
+const previewText = "Você está na lista: desenvolvimento prático e inteligência artificial sem enrolação.";
+
 export const WelcomeEmail = ({ name = "Dev", unsubscribeUrl = "#" }: WelcomeEmailProps) => {
   return (
-    <Html>
-      <Head />
-      <Preview>Você está na lista: desenvolvimento prático e inteligência artificial sem enrolação.</Preview>
-      <Tailwind>
-        <Body className="bg-[#080b12] font-sans m-0 p-0">
-          <Container className="bg-[#10141d] my-8 mx-auto p-0 max-w-xl border border-[#2d3327]">
-            <div className="bg-[#d8ff3e] px-8 py-5">
-              <Text className="m-0 text-xs font-bold uppercase tracking-[4px] text-[#14110f]">Newsletter Técnica</Text>
+    <html>
+      <head />
+      <body style={{ margin: 0, padding: 0, backgroundColor: "#080b12", fontFamily: "Arial, sans-serif" }}>
+        <div style={{ display: "none", maxHeight: 0, overflow: "hidden", opacity: 0 }}>{previewText}</div>
+        <main
+          style={{
+            maxWidth: "576px",
+            margin: "32px auto",
+            padding: 0,
+            backgroundColor: "#10141d",
+            border: "1px solid #2d3327",
+          }}
+        >
+          <div style={{ backgroundColor: "#d8ff3e", padding: "20px 32px" }}>
+            <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, letterSpacing: "4px", color: "#14110f", textTransform: "uppercase" }}>
+              Newsletter Técnica
+            </p>
+          </div>
+
+          <div style={{ padding: "32px" }}>
+            <h1 style={{ margin: "0 0 16px", color: "#f8f0dc", fontSize: "30px", lineHeight: "36px", fontWeight: 900 }}>
+              Olá, {name}. Você está na lista.
+            </h1>
+
+            <p style={{ margin: "0 0 16px", color: "#f1e7d0", fontSize: "16px", lineHeight: "28px" }}>
+              Obrigado por se inscrever. Você vai receber uma curadoria semanal para evoluir como dev iniciante ou
+              intermediário, com explicações práticas sobre código, arquitetura, produção e inteligência artificial.
+            </p>
+
+            <p style={{ margin: "0 0 24px", color: "#f1e7d0", fontSize: "16px", lineHeight: "28px" }}>
+              A ideia é simples: menos hype, mais entendimento. Cada edição traz um tema técnico, um checklist para
+              praticar e uma seção de IA no radar.
+            </p>
+
+            <div style={{ marginBottom: "24px", padding: "16px 20px", backgroundColor: "#0b0f17", border: "1px solid #2d3327" }}>
+              <p style={{ margin: "0 0 8px", color: "#d8ff3e", fontSize: "12px", fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase" }}>
+                O que vem agora
+              </p>
+              <p style={{ margin: 0, color: "#f1e7d0", fontSize: "16px", lineHeight: "28px" }}>
+                Amanhã você recebe a primeira edição. Depois disso, os próximos conteúdos chegam uma vez por semana.
+              </p>
             </div>
 
-            <div className="px-8 py-8">
-              <Heading className="text-3xl font-black text-[#f8f0dc] mb-4 tracking-tight leading-tight">
-                Olá, {name}. Você está na lista.
-              </Heading>
+            <p style={{ margin: 0, color: "#f1e7d0", fontSize: "16px", lineHeight: "28px" }}>
+              Se quiser aproveitar melhor, responda mentalmente a cada edição: onde eu aplicaria isso em um projeto
+              real?
+            </p>
+          </div>
 
-              <Text className="text-[#f1e7d0] text-base leading-7 mb-4">
-                Obrigado por se inscrever. Você vai receber uma curadoria semanal para evoluir como dev iniciante ou
-                intermediário, com explicações práticas sobre código, arquitetura, produção e inteligência artificial.
-              </Text>
-
-              <Text className="text-[#f1e7d0] text-base leading-7 mb-6">
-                A ideia é simples: menos hype, mais entendimento. Cada edição traz um tema técnico, um checklist para
-                praticar e uma seção de IA no radar.
-              </Text>
-
-              <div className="border border-[#2d3327] bg-[#0b0f17] px-5 py-4 mb-6">
-                <Text className="m-0 mb-2 text-xs font-bold uppercase tracking-[3px] text-[#d8ff3e]">O que vem agora</Text>
-                <Text className="m-0 text-[#f1e7d0] text-base leading-7">
-                  Amanhã você recebe a primeira edição. Depois disso, os próximos conteúdos chegam uma vez por semana.
-                </Text>
-              </div>
-
-              <Text className="text-[#f1e7d0] text-base leading-7 mb-0">
-                Se quiser aproveitar melhor, responda mentalmente a cada edição: onde eu aplicaria isso em um projeto
-                real?
-              </Text>
-            </div>
-
-            <div className="border-t border-[#2d3327] px-8 py-5">
-              <Text className="text-xs text-[#f1e7d0]/60 leading-5 m-0">
-                Você recebeu este e-mail porque se cadastrou em nossa landing page. Se deseja parar de receber estas
-                atualizações, basta{" "}
-                <Link href={unsubscribeUrl} className="text-[#d8ff3e] underline font-medium">
-                  cancelar a inscrição aqui
-                </Link>
-                .
-              </Text>
-            </div>
-          </Container>
-        </Body>
-      </Tailwind>
-    </Html>
+          <div style={{ padding: "20px 32px", borderTop: "1px solid #2d3327" }}>
+            <p style={{ margin: 0, color: "rgba(241, 231, 208, 0.6)", fontSize: "12px", lineHeight: "20px" }}>
+              Você recebeu este e-mail porque se cadastrou em nossa landing page. Se deseja parar de receber estas
+              atualizações, basta{" "}
+              <a href={unsubscribeUrl} style={{ color: "#d8ff3e", fontWeight: 500, textDecoration: "underline" }}>
+                cancelar a inscrição aqui
+              </a>
+              .
+            </p>
+          </div>
+        </main>
+      </body>
+    </html>
   );
 };
 

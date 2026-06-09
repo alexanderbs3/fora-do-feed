@@ -14,7 +14,6 @@
     "node": "20.x"
   },
   "dependencies": {
-    "@react-email/components": "1.0.12",
     "@react-email/render": "^2.0.8",
     "@supabase/supabase-js": "^2.108.0",
     "next": "16.2.7",
