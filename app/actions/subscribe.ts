@@ -32,18 +32,29 @@ function isResendConfigured() {
 }
 
 function getResendErrorMessage(error: unknown) {
-  const message = error instanceof Error ? error.message : String((error as { message?: string })?.message || "");
+  const rawMessage = error instanceof Error ? error.message : String((error as { message?: string })?.message || "");
+  const serializedError = JSON.stringify(error);
+  const message = `${rawMessage} ${serializedError}`.toLowerCase();
 
-  if (message.includes("API key is invalid")) {
-    return "A chave do Resend configurada em .env.local é inválida.";
+  if (message.includes("api key is invalid") || message.includes("invalid api key")) {
+    return "A chave RESEND_API_KEY configurada no ambiente é inválida.";
   }
 
-  if (message.includes("domain is not verified") || message.includes("verify a domain")) {
+  if (
+    message.includes("domain is not verified") ||
+    message.includes("verify a domain") ||
+    message.includes("domain not found") ||
+    message.includes("domain_not_found")
+  ) {
     return "O domínio/remetente ainda não foi verificado no Resend.";
   }
 
-  if (message.includes("You can only send testing emails")) {
+  if (message.includes("testing emails") || message.includes("only send") || message.includes("to your own email")) {
     return "No modo de teste do Resend, envie apenas para o e-mail cadastrado na sua conta ou verifique um domínio.";
+  }
+
+  if (message.includes("from") || message.includes("sender")) {
+    return "O remetente RESEND_FROM_EMAIL não foi aceito pelo Resend. Use onboarding@resend.dev em teste ou um domínio verificado.";
   }
 
   return "O Resend recusou o envio. Verifique a chave, o remetente e o destinatário.";
