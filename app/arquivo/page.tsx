@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Arquivo",
   description: "Leia as edições já enviadas da newsletter Fora do Feed.",
   alternates: { canonical: "/arquivo" },
+  openGraph: { url: "/arquivo" },
 };
 
 export const dynamic = "force-dynamic";

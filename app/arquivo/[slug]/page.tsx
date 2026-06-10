@@ -21,13 +21,14 @@ export async function generateMetadata({ params }: ArchiveEditionPageProps): Pro
   const edition = await getPublishedEditionBySlug(slug);
 
   if (!edition) {
-    return { title: "Edição não encontrada | Fora do Feed" };
+    return { title: "Edição não encontrada" };
   }
 
   return {
-    title: `${edition.title} | Fora do Feed`,
+    title: edition.title,
     description: getPublicEditionDescription(edition.intro),
     alternates: { canonical: `/arquivo/${edition.slug}` },
+    openGraph: { url: `/arquivo/${edition.slug}` },
   };
 }
 
