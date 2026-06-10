@@ -1,15 +1,21 @@
 import { SubscribeForm } from "./components/SubscribeForm";
+import { listPublishedEditions } from "@/lib/editions";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Fora do Feed",
-  description: "Receba curadoria de tecnologia, software, IA e negócios tech com contexto prático para devs.",
+  description: "Toda segunda: 7 sinais de tecnologia e IA curados para devs. Sem hype. Com contexto prático. Grátis.",
   alternates: { canonical: "/" },
+  openGraph: { url: "/" },
 };
 
 const topics = ["código limpo", "produção real", "IA aplicada", "carreira dev"];
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const [latestEdition] = await listPublishedEditions(1);
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#080b12] px-5 py-6 text-[#f1e7d0] sm:px-8 lg:px-12">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(241,231,208,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(241,231,208,0.08)_1px,transparent_1px)] bg-[size:44px_44px] [mask-image:radial-gradient(circle_at_25%_20%,black,transparent_70%)]" />
@@ -23,6 +29,7 @@ export default function HomePage() {
               Newsletter Técnica
             </span>
             <span className="text-xs uppercase tracking-[0.32em] text-[#f1e7d0]/60">dev + inteligência artificial</span>
+            <span className="text-xs uppercase tracking-[0.32em] text-[#f1e7d0]/60">Toda segunda-feira · Grátis</span>
             <a className="text-xs uppercase tracking-[0.24em] text-[#d8ff3e] underline" href="/arquivo">
               Arquivo
             </a>
@@ -36,6 +43,12 @@ export default function HomePage() {
             Receba análises curtas e aplicáveis sobre código, carreira, produção e notícias de inteligência artificial
             explicadas para devs iniciantes e intermediários.
           </p>
+
+          {latestEdition && (
+            <a className="mt-6 inline-block text-sm text-[#d8ff3e] underline" href={`/arquivo/${latestEdition.slug}`}>
+              → Leia a última edição antes de decidir
+            </a>
+          )}
 
           <div className="mt-10 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
             {topics.map((topic) => (

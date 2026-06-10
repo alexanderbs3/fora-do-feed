@@ -32,7 +32,7 @@ export function SubscribeForm() {
         <div className="mb-7 flex items-start justify-between gap-5">
           <div>
             <p className="mb-3 font-[var(--font-display)] text-[10px] uppercase tracking-[0.28em] text-[#d8ff3e]">
-              Entrada restrita
+              Lista aberta
             </p>
             <h2 className="font-[var(--font-display)] text-3xl leading-none tracking-[-0.05em] text-[#f8f0dc]">
               Entre na lista.
