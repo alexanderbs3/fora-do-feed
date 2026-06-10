@@ -46,6 +46,15 @@ export function SubscribeForm() {
         </p>
 
         <form action={formAction} className="space-y-4">
+          <input
+            type="text"
+            name="website"
+            style={{ display: "none", position: "absolute", left: "-9999px" }}
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+          />
+
           <div>
             <label htmlFor="name" className="mb-2 block font-[var(--font-display)] text-[10px] uppercase tracking-[0.24em] text-[#f1e7d0]/58">
               Nome opcional

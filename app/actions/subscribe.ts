@@ -71,6 +71,11 @@ function getResendErrorMessage(error: unknown) {
 }
 
 export async function subscribeUser(_prevState: FormState, formData: FormData): Promise<FormState> {
+  const honeypot = formData.get("website");
+  if (honeypot) {
+    return { success: true, message: "" };
+  }
+
   const rawEmail = formData.get("email");
   const rawName = formData.get("name");
   const turnstileToken = String(formData.get("cf-turnstile-response") || "");
