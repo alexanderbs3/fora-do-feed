@@ -24,7 +24,6 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Fora do Feed",
     description: "Tecnologia, software e IA sem ruído de feed.",
-    url: "https://fora-do-feed.com",
     siteName: "Fora do Feed",
     locale: "pt_BR",
     type: "website",
@@ -32,6 +31,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+    title: "Fora do Feed",
+    description: "Tecnologia, software e IA sem ruído de feed.",
     images: ["/og-image.png"],
   },
   alternates: {
