@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { listPublishedEditions } from "@/lib/editions";
+import { getPublicEditionDescription, listPublishedEditions } from "@/lib/editions";
 
 export const metadata: Metadata = {
   title: "Arquivo",
@@ -70,7 +70,7 @@ export default async function ArchivePage() {
                   <h2 className="font-[var(--font-display)] text-3xl leading-none tracking-[-0.05em] text-[#f8f0dc] group-hover:text-[#d8ff3e]">
                     {edition.title}
                   </h2>
-                  <p className="mt-3 line-clamp-2 max-w-3xl text-sm leading-6 text-[#f1e7d0]/65">{edition.intro}</p>
+                  <p className="mt-3 line-clamp-2 max-w-3xl text-sm leading-6 text-[#f1e7d0]/65">{getPublicEditionDescription(edition.intro)}</p>
                 </div>
                 <div className="font-[var(--font-display)] text-xs uppercase tracking-[0.2em] text-[#ffb29d]">
                   {edition.items.length} sinais

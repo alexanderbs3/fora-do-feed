@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getPublishedEditionBySlug } from "@/lib/editions";
+import { getPublicEditionDescription, getPublishedEditionBySlug } from "@/lib/editions";
 
 type ArchiveEditionPageProps = {
   params: Promise<{ slug: string }>;
@@ -26,7 +26,8 @@ export async function generateMetadata({ params }: ArchiveEditionPageProps): Pro
 
   return {
     title: `${edition.title} | Fora do Feed`,
-    description: edition.intro,
+    description: getPublicEditionDescription(edition.intro),
+    alternates: { canonical: `/arquivo/${edition.slug}` },
   };
 }
 
@@ -61,7 +62,7 @@ export default async function ArchiveEditionPage({ params }: ArchiveEditionPageP
           <h1 className="mt-5 font-[var(--font-display)] text-5xl leading-[0.9] tracking-[-0.07em] text-[#f8f0dc] sm:text-7xl">
             {edition.title}
           </h1>
-          <p className="mt-7 text-xl leading-9 text-[#f1e7d0]/75">{edition.intro}</p>
+          <p className="mt-7 text-xl leading-9 text-[#f1e7d0]/75">{getPublicEditionDescription(edition.intro)}</p>
         </header>
 
         <ol className="mt-10 space-y-6">

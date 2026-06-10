@@ -9,6 +9,9 @@ export const editionItemLimit = 7;
 export const defaultEditionIntro =
   "Selecionamos os movimentos mais relevantes da semana em tecnologia, software e cultura digital. A ideia é separar sinal de ruído: menos manchete inflada, mais contexto útil.";
 
+export const publicEditionDescriptionFallback =
+  "Edição da newsletter Fora do Feed com curadoria de tecnologia, software e inteligência artificial.";
+
 export type NewsletterEditionItem = {
   title: string;
   url: string;
@@ -59,6 +62,20 @@ function mapEdition(row: NewsletterEditionRow): NewsletterEdition {
     approvedAt: row.approved_at || undefined,
     sentAt: row.sent_at || undefined,
   };
+}
+
+export function isPublicEdition(edition: NewsletterEdition) {
+  return edition.status === "sent" && Boolean(edition.sentAt);
+}
+
+export function getPublicEditionDescription(intro?: string) {
+  const normalizedIntro = intro?.trim() || "";
+
+  if (!normalizedIntro || normalizedIntro.toLowerCase().includes("rascunho gerado automaticamente")) {
+    return publicEditionDescriptionFallback;
+  }
+
+  return normalizedIntro;
 }
 
 function isMissingTableError(error: { code?: string; message?: string }) {
@@ -113,6 +130,7 @@ export async function listPublishedEditions(limit = 24) {
     .from("newsletter_editions")
     .select("id,title,slug,status,intro,items,created_at,approved_at,sent_at")
     .eq("status", "sent")
+    .not("sent_at", "is", null)
     .order("sent_at", { ascending: false })
     .limit(limit);
 
@@ -124,7 +142,7 @@ export async function listPublishedEditions(limit = 24) {
     throw new Error(`Erro ao carregar arquivo de edições: ${error.message}`);
   }
 
-  return ((data || []) as NewsletterEditionRow[]).map(mapEdition);
+  return ((data || []) as NewsletterEditionRow[]).map(mapEdition).filter(isPublicEdition);
 }
 
 export async function getPublishedEditionBySlug(slug: string) {
@@ -134,6 +152,7 @@ export async function getPublishedEditionBySlug(slug: string) {
     .select("id,title,slug,status,intro,items,created_at,approved_at,sent_at")
     .eq("slug", slug)
     .eq("status", "sent")
+    .not("sent_at", "is", null)
     .maybeSingle();
 
   if (error) {
@@ -144,7 +163,13 @@ export async function getPublishedEditionBySlug(slug: string) {
     throw new Error(`Erro ao carregar edição publicada: ${error.message}`);
   }
 
-  return data ? mapEdition(data as NewsletterEditionRow) : null;
+  if (!data) {
+    return null;
+  }
+
+  const edition = mapEdition(data as NewsletterEditionRow);
+
+  return isPublicEdition(edition) ? edition : null;
 }
 
 export async function getLatestEdition() {
