@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Archivo_Black, Fraunces } from "next/font/google";
+import { JsonLd } from "./components/JsonLd";
 import "./globals.css";
 
 const display = Archivo_Black({
@@ -41,7 +42,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR" className={`${display.variable} ${serif.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <JsonLd />
+      </body>
     </html>
   );
 }
